@@ -1,0 +1,10 @@
+xcuserdata/
+DerivedData/
+*.xcworkspace
+Pods/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.moved-aside
+.build/
