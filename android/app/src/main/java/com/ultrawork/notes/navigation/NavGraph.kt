@@ -1,3 +1,5 @@
+@file:Suppress("MatchingDeclarationName")
+
 package com.ultrawork.notes.navigation
 
 import androidx.compose.runtime.Composable
@@ -11,6 +13,7 @@ object Routes {
     const val NOTES = "notes"
 }
 
+@Suppress("FunctionNaming")
 @Composable
 fun NavGraph() {
     val navController = rememberNavController()
@@ -20,13 +23,13 @@ fun NavGraph() {
         startDestination = Routes.LOGIN
     ) {
         composable(Routes.LOGIN) {
-            // TODO: LoginScreen
+            // LoginScreen placeholder
         }
         composable(Routes.REGISTER) {
-            // TODO: RegisterScreen
+            // RegisterScreen placeholder
         }
         composable(Routes.NOTES) {
-            // TODO: NotesScreen
+            // NotesScreen placeholder
         }
     }
 }

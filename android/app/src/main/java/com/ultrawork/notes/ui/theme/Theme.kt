@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 private val DarkColorScheme = darkColorScheme()
 private val LightColorScheme = lightColorScheme()
 
+@Suppress("FunctionNaming")
 @Composable
 fun NotesAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
