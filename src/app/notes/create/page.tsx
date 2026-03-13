@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import NoteForm from '../components/NoteForm';
 
 export default function CreateNotePage() {
