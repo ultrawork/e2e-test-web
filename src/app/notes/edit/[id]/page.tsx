@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import NoteForm from '@/components/NoteForm';
+import NoteForm from '../../../components/NoteForm';
 
 interface Note {
   id: string;
@@ -11,32 +11,30 @@ interface Note {
   createdAt: string;
 }
 
-function getToken(): string {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('accessToken') || '';
-  }
-  return '';
-}
-
-export default function EditNotePage(): React.ReactElement {
+export default function EditNotePage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [note, setNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    async function fetchNote(): Promise<void> {
+  useEffect(function () {
+    async function fetchNote() {
       try {
-        const token = getToken();
-        const response = await fetch(`/api/notes/${params.id}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        let token = '';
+        if (typeof window !== 'undefined') {
+          token = localStorage.getItem('accessToken') || '';
+        }
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers['Authorization'] = 'Bearer ' + token;
+        }
+        const response = await fetch('/api/notes/' + params.id, { headers: headers });
         if (!response.ok) {
           setError('Failed to load note');
           return;
         }
-        const data: Note = await response.json();
+        const data = await response.json();
         setNote(data);
       } catch {
         setError('Failed to load note');
@@ -47,14 +45,18 @@ export default function EditNotePage(): React.ReactElement {
     fetchNote();
   }, [params.id]);
 
-  async function handleSubmit(data: { title: string; content: string }): Promise<void> {
-    const token = getToken();
-    const response = await fetch(`/api/notes/${params.id}`, {
+  async function handleSubmit(data: { title: string; content: string }) {
+    let token = '';
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem('accessToken') || '';
+    }
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = 'Bearer ' + token;
+    }
+    const response = await fetch('/api/notes/' + params.id, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+      headers: headers,
       body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -74,7 +76,7 @@ export default function EditNotePage(): React.ReactElement {
   if (error || !note) {
     return (
       <main style={{ padding: '2rem', fontFamily: 'system-ui', maxWidth: '640px' }}>
-        <p>{error ?? 'Note not found'}</p>
+        <p>{error || 'Note not found'}</p>
       </main>
     );
   }

@@ -16,38 +16,46 @@ export default function NotesListPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  useEffect(function () {
     async function fetchNotes() {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+      let token = '';
+      if (typeof window !== 'undefined') {
+        token = localStorage.getItem('accessToken') || '';
+      }
       if (!token) {
         setLoading(false);
         return;
       }
-      const response = await fetch('/api/notes', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.status === 401) {
-        setLoading(false);
-        return;
-      }
-      if (response.ok) {
-        const data = await response.json();
-        setNotes(data);
+      try {
+        const response = await fetch('/api/notes', {
+          headers: { 'Authorization': 'Bearer ' + token },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setNotes(data);
+        }
+      } catch {
+        // ignore
       }
       setLoading(false);
     }
     fetchNotes();
-  }, [router]);
+  }, []);
 
   async function handleDelete(id: string) {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    let token = '';
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem('accessToken') || '';
+    }
     if (!token) return;
-    const response = await fetch(`/api/notes/${id}`, {
+    const response = await fetch('/api/notes/' + id, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { 'Authorization': 'Bearer ' + token },
     });
     if (response.ok) {
-      setNotes((prev) => prev.filter((n) => n.id !== id));
+      setNotes(function (prev) {
+        return prev.filter(function (n) { return n.id !== id; });
+      });
     }
   }
 
@@ -73,15 +81,17 @@ export default function NotesListPage() {
         <p>No notes yet.</p>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0 }}>
-          {notes.map((note) => (
-            <li key={note.id} data-testid="note-item" style={{ border: '1px solid #ddd', padding: '1rem', marginBottom: '0.5rem', borderRadius: '4px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Link href={`/notes/edit/${note.id}`}><strong>{note.title}</strong></Link>
-                <button onClick={() => handleDelete(note.id)} style={{ color: '#dc2626' }}>Delete</button>
-              </div>
-              <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}>{note.createdAt}</p>
-            </li>
-          ))}
+          {notes.map(function (note) {
+            return (
+              <li key={note.id} data-testid="note-item" style={{ border: '1px solid #ddd', padding: '1rem', marginBottom: '0.5rem', borderRadius: '4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Link href={'/notes/edit/' + note.id}><strong>{note.title}</strong></Link>
+                  <button onClick={function () { handleDelete(note.id); }} style={{ color: '#dc2626' }}>Delete</button>
+                </div>
+                <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}>{note.createdAt}</p>
+              </li>
+            );
+          })}
         </ul>
       )}
     </main>

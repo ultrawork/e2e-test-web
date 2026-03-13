@@ -1,45 +1,45 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import NoteForm from '@/components/NoteForm';
+import NoteForm from '../../components/NoteForm';
 
-async function ensureToken(): Promise<string> {
-  if (typeof window === 'undefined') return '';
-  let token = localStorage.getItem('accessToken');
-  if (token) return token;
-
-  // Auto-create guest session
-  const guestEmail = `guest_${Date.now()}@notes.local`;
-  await fetch('/api/auth/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: guestEmail, password: 'guest' }),
-  });
-  const loginResp = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: guestEmail, password: 'guest' }),
-  });
-  if (loginResp.ok) {
-    const body = await loginResp.json();
-    token = body.accessToken;
-    localStorage.setItem('accessToken', token!);
-    return token!;
-  }
-  return '';
-}
-
-export default function CreateNotePage(): React.ReactElement {
+export default function CreateNotePage() {
   const router = useRouter();
 
-  async function handleSubmit(data: { title: string; content: string }): Promise<void> {
-    const token = await ensureToken();
+  async function handleSubmit(data: { title: string; content: string }) {
+    let token = '';
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem('accessToken') || '';
+    }
+
+    if (!token) {
+      // Auto-create guest session
+      const guestEmail = 'guest_' + Date.now() + '@notes.local';
+      await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: guestEmail, password: 'guest' }),
+      });
+      const loginResp = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: guestEmail, password: 'guest' }),
+      });
+      if (loginResp.ok) {
+        const loginBody = await loginResp.json();
+        token = loginBody.accessToken;
+        localStorage.setItem('accessToken', token);
+      }
+    }
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = 'Bearer ' + token;
+    }
+
     const response = await fetch('/api/notes', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+      headers: headers,
       body: JSON.stringify(data),
     });
     if (!response.ok) {
