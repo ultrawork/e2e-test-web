@@ -21,11 +21,11 @@ interface AppStore {
   nc: number;
 }
 
-const g = globalThis as any;
+const g = globalThis as unknown as Record<string, unknown>;
 if (!g.__noteapp_store) {
   g.__noteapp_store = { users: [], notes: [], tokens: {}, uc: 1, nc: 1 };
 }
-const store: AppStore = g.__noteapp_store;
+const store: AppStore = g.__noteapp_store as AppStore;
 
 export function findUserByEmail(email: string): User | undefined {
   return store.users.find((u) => u.email === email);

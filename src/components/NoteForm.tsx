@@ -20,9 +20,15 @@ export default function NoteForm({ note, onSubmit }: NoteFormProps): React.React
   const [content, setContent] = useState(note?.content ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [titleError, setTitleError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
+    setTitleError(null);
+    if (!title.trim()) {
+      setTitleError('Title is required');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -44,10 +50,13 @@ export default function NoteForm({ note, onSubmit }: NoteFormProps): React.React
           id="note-title"
           type="text"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => { setTitle(e.target.value); setTitleError(null); }}
           required
+          aria-describedby={titleError ? 'note-title-error' : undefined}
+          aria-invalid={titleError ? true : undefined}
           style={{ width: '100%', padding: '0.5rem', fontSize: '1rem', boxSizing: 'border-box' }}
         />
+        {titleError && <p id="note-title-error" role="alert" style={{ color: '#dc2626', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>{titleError}</p>}
         <CreatedDate date={note?.createdAt ?? null} />
       </section>
 
