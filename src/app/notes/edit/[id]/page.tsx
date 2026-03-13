@@ -8,7 +8,7 @@ const mockNotes: Record<string, { title: string; content: string }> = {
   '2': { title: 'Вторая заметка', content: 'Содержимое второй заметки' },
 };
 
-export default function EditNotePage({ params }: { params: Promise<{ id: string }> }): React.ReactElement {
+export default function EditNotePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const note = mockNotes[id];
 
