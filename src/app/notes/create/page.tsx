@@ -1,9 +1,8 @@
 'use client';
 
-import React from 'react';
 import NoteForm from '../components/NoteForm';
 
-export default function CreateNotePage(): React.ReactElement {
+export default function CreateNotePage() {
   const handleSubmit = (title: string, content: string): void => {
     console.log('Создание заметки:', { title, content });
   };

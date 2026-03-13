@@ -1,12 +1,10 @@
 'use client';
 
-import React from 'react';
-
 interface CharacterCounterProps {
   count: number;
 }
 
-export default function CharacterCounter({ count }: CharacterCounterProps): React.ReactElement {
+export default function CharacterCounter({ count }: CharacterCounterProps) {
   return (
     <span
       role="status"

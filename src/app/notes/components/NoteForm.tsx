@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
-import type { FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import CharacterCounter from './CharacterCounter';
 
 interface NoteFormProps {
@@ -10,7 +9,7 @@ interface NoteFormProps {
   onSubmit: (title: string, content: string) => void;
 }
 
-export default function NoteForm({ initialTitle = '', initialContent = '', onSubmit }: NoteFormProps): React.ReactElement {
+export default function NoteForm({ initialTitle = '', initialContent = '', onSubmit }: NoteFormProps) {
   const [title, setTitle] = useState(initialTitle);
   const [content, setContent] = useState(initialContent);
 
