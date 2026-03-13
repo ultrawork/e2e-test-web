@@ -62,7 +62,7 @@ export default function EditNotePage() {
     if (!response.ok) {
       throw new Error('Failed to save note');
     }
-    router.push('/');
+    router.push('/notes');
   }
 
   if (loading) {

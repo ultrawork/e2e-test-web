@@ -45,7 +45,7 @@ export default function CreateNotePage() {
     if (!response.ok) {
       throw new Error('Failed to create note');
     }
-    router.push('/');
+    router.push('/notes');
   }
 
   return (
