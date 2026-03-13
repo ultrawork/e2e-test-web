@@ -1,3 +1,3 @@
-# e2e-test-web
+# Notes App — Web (Next.js)
 
-Бизнес-анализ: Это полноценное приложение для заметок, которое будет использоваться реальными пользователями. Веб-версия + мобильные приложения (iOS и Android) + бекенд API.; Кроссплатформенная синхро
+Cross-platform notes application — web frontend built with Next.js 15 + React 19 + TypeScript.
