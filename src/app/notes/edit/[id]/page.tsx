@@ -38,11 +38,14 @@ export default function EditNotePage(): React.ReactElement {
   }, [params.id]);
 
   async function handleSubmit(data: { title: string; content: string }): Promise<void> {
-    await fetch(`/api/notes/${params.id}`, {
+    const response = await fetch(`/api/notes/${params.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
+    if (!response.ok) {
+      throw new Error('Failed to save note');
+    }
     router.push('/');
   }
 

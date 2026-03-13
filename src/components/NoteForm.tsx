@@ -18,10 +18,20 @@ interface NoteFormProps {
 export default function NoteForm({ note, onSubmit }: NoteFormProps): React.ReactElement {
   const [title, setTitle] = useState(note?.title ?? '');
   const [content, setContent] = useState(note?.content ?? '');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>): void {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
-    onSubmit({ title, content });
+    setSubmitting(true);
+    setError(null);
+    try {
+      await onSubmit({ title, content });
+    } catch {
+      setError('Failed to save. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -54,8 +64,10 @@ export default function NoteForm({ note, onSubmit }: NoteFormProps): React.React
         />
       </section>
 
-      <button type="submit" style={{ padding: '0.5rem 1rem', fontSize: '1rem', cursor: 'pointer', alignSelf: 'flex-start' }}>
-        {note ? 'Save' : 'Create'}
+      {error && <p role="alert" style={{ color: '#dc2626', fontSize: '0.875rem', margin: 0 }}>{error}</p>}
+
+      <button type="submit" disabled={submitting} style={{ padding: '0.5rem 1rem', fontSize: '1rem', cursor: submitting ? 'not-allowed' : 'pointer', alignSelf: 'flex-start', opacity: submitting ? 0.6 : 1 }}>
+        {submitting ? 'Saving...' : (note ? 'Save' : 'Create')}
       </button>
     </form>
   );
