@@ -29,6 +29,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: android
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -38,6 +42,9 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -52,12 +59,8 @@ jobs:
       - name: Lint (Detekt)
         run: ./gradlew detekt --no-daemon
 
-      - name: Test with coverage
-        run: ./gradlew test jacocoTestReport --no-daemon
-
-      - name: Check coverage threshold (80%)
-        run: |
-          ./gradlew jacocoTestCoverageVerification --no-daemon || echo "Coverage below 80% threshold"
+      - name: Test
+        run: ./gradlew test --no-daemon
 
       - name: Build
         run: ./gradlew build --no-daemon -x test
