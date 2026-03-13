@@ -1,5 +1,3 @@
-'use client';
-
 interface CharacterCounterProps {
   count: number;
 }

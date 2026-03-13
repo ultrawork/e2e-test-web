@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, type FormEvent } from 'react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 import CharacterCounter from './CharacterCounter';
 
 interface NoteFormProps {
