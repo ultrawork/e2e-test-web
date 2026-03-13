@@ -25,12 +25,27 @@ test.describe('Web Notes', () => {
   test('SC-016: should display stored date on edit note page', async ({ page, request }) => {
     const apiUrl = process.env.API_URL || process.env.BASE_URL || 'http://localhost:3000';
 
+    // Register and login to get auth token
+    const email = `edittest_${Date.now()}@example.com`;
+    await request.post(`${apiUrl}/api/auth/register`, {
+      data: { email, password: 'SecurePass123' },
+    });
+    const loginResp = await request.post(`${apiUrl}/api/auth/login`, {
+      data: { email, password: 'SecurePass123' },
+    });
+    const { accessToken } = await loginResp.json();
+
     // Create a note via API to have a known createdAt
     const createResponse = await request.post(`${apiUrl}/api/notes`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
       data: { title: 'Edit Test Note', content: 'Some content' },
     });
     const note = await createResponse.json();
     const noteId = note.id;
+
+    // Set token in browser localStorage so edit page can use it
+    await page.goto('/');
+    await page.evaluate((token) => localStorage.setItem('accessToken', token), accessToken);
 
     // Visit edit page
     await page.goto(`/notes/edit/${noteId}`);

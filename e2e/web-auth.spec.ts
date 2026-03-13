@@ -16,10 +16,16 @@ test.describe('Web Auth', () => {
     await expect(page).not.toHaveURL(/register/);
   });
 
-  test('SC-013: should login and logout', async ({ page }) => {
+  test('SC-013: should login and logout', async ({ page, request }) => {
+    const apiUrl = process.env.API_URL || process.env.BASE_URL || 'http://localhost:3000';
+    const email = `webuser_${Date.now()}@example.com`;
+    await request.post(`${apiUrl}/api/auth/register`, {
+      data: { email, password: 'SecurePass123' },
+    });
+
     await page.goto('/');
     await page.getByRole('link', { name: /login|sign in/i }).click();
-    await page.getByLabel(/email/i).fill('webuser@example.com');
+    await page.getByLabel(/email/i).fill(email);
     await page.getByLabel(/password/i).fill('SecurePass123');
     await page.getByRole('button', { name: /login|sign in|submit/i }).click();
     await expect(page.getByRole('heading', { name: /notes/i })).toBeVisible();

@@ -11,6 +11,13 @@ interface Note {
   createdAt: string;
 }
 
+function getToken(): string {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('accessToken') || '';
+  }
+  return '';
+}
+
 export default function EditNotePage(): React.ReactElement {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -21,7 +28,10 @@ export default function EditNotePage(): React.ReactElement {
   useEffect(() => {
     async function fetchNote(): Promise<void> {
       try {
-        const response = await fetch(`/api/notes/${params.id}`);
+        const token = getToken();
+        const response = await fetch(`/api/notes/${params.id}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         if (!response.ok) {
           setError('Failed to load note');
           return;
@@ -38,9 +48,13 @@ export default function EditNotePage(): React.ReactElement {
   }, [params.id]);
 
   async function handleSubmit(data: { title: string; content: string }): Promise<void> {
+    const token = getToken();
     const response = await fetch(`/api/notes/${params.id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify(data),
     });
     if (!response.ok) {
