@@ -1,3 +1,7 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
 interface CreatedDateProps {
   date: string | Date | null;
 }
@@ -11,14 +15,42 @@ function formatDate(date: Date): string {
   return `${day}.${month}.${year} ${hours}:${minutes}`;
 }
 
-export default function CreatedDate({ date }: CreatedDateProps): React.ReactElement {
-  const resolvedDate = date ? new Date(date) : new Date();
+function parseDate(date: string | Date): Date | null {
+  const parsed = new Date(date);
+  if (isNaN(parsed.getTime())) {
+    return null;
+  }
+  return parsed;
+}
+
+export default function CreatedDate({ date }: CreatedDateProps): React.ReactElement | null {
+  const [currentDate, setCurrentDate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    if (date === null) {
+      setCurrentDate(new Date());
+    }
+  }, [date]);
+
+  if (date !== null) {
+    const parsed = parseDate(date);
+    if (!parsed) {
+      return null;
+    }
+    return (
+      <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}>
+        {formatDate(parsed)}
+      </p>
+    );
+  }
+
+  if (!currentDate) {
+    return null;
+  }
 
   return (
-    <p
-      style={{ color: '#6b7280', fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}
-    >
-      {formatDate(resolvedDate)}
+    <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}>
+      {formatDate(currentDate)}
     </p>
   );
 }

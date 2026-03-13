@@ -1,11 +1,18 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import NoteForm from '@/components/NoteForm';
 
 export default function CreateNotePage(): React.ReactElement {
-  function handleSubmit(data: { title: string; content: string }): void {
-    // TODO: call API to create note
-    console.log('Create note:', data);
+  const router = useRouter();
+
+  async function handleSubmit(data: { title: string; content: string }): Promise<void> {
+    await fetch('/api/notes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    router.push('/');
   }
 
   return (

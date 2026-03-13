@@ -12,7 +12,7 @@ interface Note {
 
 interface NoteFormProps {
   note?: Note | null;
-  onSubmit: (data: { title: string; content: string }) => void;
+  onSubmit: (data: { title: string; content: string }) => void | Promise<void>;
 }
 
 export default function NoteForm({ note, onSubmit }: NoteFormProps): React.ReactElement {
