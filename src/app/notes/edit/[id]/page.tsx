@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { useParams } from 'next/navigation';
 import NoteForm from '../../components/NoteForm';
 
 const mockNotes: Record<string, { title: string; content: string }> = {
@@ -8,8 +8,9 @@ const mockNotes: Record<string, { title: string; content: string }> = {
   '2': { title: 'Вторая заметка', content: 'Содержимое второй заметки' },
 };
 
-export default function EditNotePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function EditNotePage() {
+  const params = useParams();
+  const id = params.id as string;
   const note = mockNotes[id];
 
   const handleSubmit = (title: string, content: string): void => {
