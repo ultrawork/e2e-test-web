@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import NotesCounter from '@/components/NotesCounter';
+import SearchBar from '@/components/SearchBar';
 
 interface Note {
   id: number;
@@ -11,6 +12,11 @@ interface Note {
 export default function NotesPage(): React.ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredNotes = notes.filter((n) =>
+    n.text.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   function addNote(): void {
     const text = input.trim();
@@ -50,10 +56,12 @@ export default function NotesPage(): React.ReactElement {
         </button>
       </form>
 
-      <NotesCounter totalCount={notes.length} />
+      <SearchBar value={searchQuery} onChange={setSearchQuery} />
+
+      <NotesCounter totalCount={notes.length} filteredCount={searchQuery ? filteredNotes.length : undefined} />
 
       <ul style={{ listStyle: 'none', padding: 0 }}>
-        {notes.map((note) => (
+        {filteredNotes.map((note) => (
           <li
             key={note.id}
             style={{

@@ -74,4 +74,78 @@ test.describe('Notes App', () => {
 
     await expect(page.getByText('Всего заметок: 0')).toBeVisible();
   });
+
+  test('SC-006: Search filters notes by title', async ({ page }) => {
+    await page.goto('/notes');
+
+    await page.getByLabel('New note').fill('Купить молоко');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await page.getByLabel('New note').fill('Позвонить маме');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await page.getByLabel('New note').fill('Купить хлеб');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await expect(page.getByText('Всего заметок: 3')).toBeVisible();
+
+    await page.getByPlaceholder('Поиск заметок...').fill('Купить');
+
+    await expect(page.getByText('Купить молоко')).toBeVisible();
+    await expect(page.getByText('Купить хлеб')).toBeVisible();
+    await expect(page.getByText('Позвонить маме')).not.toBeVisible();
+    await expect(page.getByText('Найдено: 2 из 3')).toBeVisible();
+  });
+
+  test('SC-007: Clearing search shows all notes', async ({ page }) => {
+    await page.goto('/notes');
+
+    await page.getByLabel('New note').fill('Заметка раз');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await page.getByLabel('New note').fill('Заметка два');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await page.getByPlaceholder('Поиск заметок...').fill('раз');
+
+    await expect(page.getByText('Заметка раз')).toBeVisible();
+    await expect(page.getByText('Заметка два')).not.toBeVisible();
+
+    await page.getByRole('button', { name: 'Очистить поиск' }).click();
+
+    await expect(page.getByText('Заметка раз')).toBeVisible();
+    await expect(page.getByText('Заметка два')).toBeVisible();
+    await expect(page.getByText('Всего заметок: 2')).toBeVisible();
+  });
+
+  test('SC-008: Search with no results shows empty list', async ({ page }) => {
+    await page.goto('/notes');
+
+    await page.getByLabel('New note').fill('Тестовая заметка');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await expect(page.getByText('Всего заметок: 1')).toBeVisible();
+
+    await page.getByPlaceholder('Поиск заметок...').fill('несуществующий текст');
+
+    await expect(page.getByText('Тестовая заметка')).not.toBeVisible();
+    await expect(page.getByText('Найдено: 0 из 1')).toBeVisible();
+  });
+
+  test('SC-009: Search is case-insensitive', async ({ page }) => {
+    await page.goto('/notes');
+
+    await page.getByLabel('New note').fill('Важная Заметка');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await page.getByPlaceholder('Поиск заметок...').fill('важная заметка');
+
+    await expect(page.getByText('Важная Заметка')).toBeVisible();
+    await expect(page.getByText('Найдено: 1 из 1')).toBeVisible();
+
+    await page.getByPlaceholder('Поиск заметок...').fill('ВАЖНАЯ ЗАМЕТКА');
+
+    await expect(page.getByText('Важная Заметка')).toBeVisible();
+    await expect(page.getByText('Найдено: 1 из 1')).toBeVisible();
+  });
 });
