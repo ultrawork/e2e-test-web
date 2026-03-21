@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { notes, categories } from '../../store';
+import { notes, categories } from '@/lib/store';
 
 export const dynamic = 'force-dynamic';
 
