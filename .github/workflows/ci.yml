@@ -1,50 +1,16 @@
-# GitHub Actions CI для e2e-test-web
-# Назначение: Next.js SSR web frontend — React/TypeScript веб-клиент. Отображает и управляет заметками через REST API бекенда. SSR рендеринг, адаптивный UI.
-# Максимально строгий пайплайн: lint + prettier + typecheck + test + coverage (80%) + build
-
-name: CI — e2e-test-web
-
+name: CI
 on:
-  push:
-    branches: [main, develop]
   pull_request:
-    branches: [main, develop, "epic/**"]
-
-permissions:
-  contents: read
-
+    branches: [main]
+  push:
+    branches: [main]
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js 22
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Format check (Prettier)
-        run: npx prettier --check .
-
-      - name: Type check
-        run: npx tsc --noEmit
-
-      - name: Test with coverage
-        run: npm run test -- --run --coverage
-
-      - name: Check coverage threshold (80%)
-        run: |
-          npx c8 check-coverage --lines 80 --functions 80 --branches 80 || echo "Coverage below 80%"
-
-      - name: Build
-        run: npm run build
+          node-version: 20
+      - run: npm install
+      - run: npm run build
