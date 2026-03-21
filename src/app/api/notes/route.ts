@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { notes, categories, generateId } from '../store';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const categoryId = request.nextUrl.searchParams.get('category');
   if (categoryId) {
