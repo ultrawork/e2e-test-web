@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { notes, categories } from '../store';
-import { randomUUID } from 'crypto';
 
 export async function GET(request: NextRequest) {
   const categoryId = request.nextUrl.searchParams.get('category');
@@ -20,7 +19,7 @@ export async function POST(request: NextRequest) {
     .map((cid: string) => categories.find((c) => c.id === cid))
     .filter(Boolean);
   const note = {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     title: body.title,
     content: body.content,
     categories: noteCats,
