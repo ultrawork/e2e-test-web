@@ -4,7 +4,8 @@ import { notes, categories, generateId } from '../store';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  const categoryId = request.nextUrl.searchParams.get('category');
+  const url = new URL(request.url);
+  const categoryId = url.searchParams.get('category');
   if (categoryId) {
     const filtered = notes.filter((n) =>
       n.categories.some((c) => c.id === categoryId)
