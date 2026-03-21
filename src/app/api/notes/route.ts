@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { notes, categories, generateId } from '@/lib/store';
+import { notes, categories, generateId } from '../../../lib/store';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);

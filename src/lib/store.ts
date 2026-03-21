@@ -1,4 +1,4 @@
-import type { Category, Note } from '@/types';
+import type { Category, Note } from '../types';
 
 interface Store {
   categories: Category[];

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { categories, generateId } from '@/lib/store';
+import { categories, generateId } from '../../../lib/store';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(_request: NextRequest) {
   return NextResponse.json(categories);
 }
 

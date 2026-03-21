@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { categories } from '@/lib/store';
+import { categories } from '../../../../lib/store';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
