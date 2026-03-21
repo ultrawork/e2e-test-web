@@ -1,21 +1,32 @@
-import type { Category, Note } from '../types';
+/** Category entity stored in memory. */
+interface Category {
+  id: string;
+  name: string;
+  color: string;
+  createdAt: string;
+}
 
-interface Store {
+/** Note entity stored in memory. */
+interface Note {
+  id: string;
+  title: string;
+  content: string;
   categories: Category[];
-  notes: Note[];
+  createdAt: string;
+  updatedAt: string;
 }
 
-const globalStore = globalThis as unknown as { __app_store?: Store };
+// Persist arrays on globalThis so data survives dev-mode hot reloads.
+const g = globalThis as unknown as {
+  __app_categories?: Category[];
+  __app_notes?: Note[];
+};
 
-if (!globalStore.__app_store) {
-  globalStore.__app_store = {
-    categories: [],
-    notes: [],
-  };
-}
+if (!g.__app_categories) g.__app_categories = [];
+if (!g.__app_notes) g.__app_notes = [];
 
-export const categories: Category[] = globalStore.__app_store.categories;
-export const notes: Note[] = globalStore.__app_store.notes;
+export const categories: Category[] = g.__app_categories;
+export const notes: Note[] = g.__app_notes;
 
 export function generateId(): string {
   try {
