@@ -27,6 +27,23 @@ export async function handleResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+/**
+ * Checks the response status for requests that return no body (e.g. DELETE 204).
+ * Throws an error with the server message when the response is not ok.
+ */
+export async function handleEmptyResponse(response: Response): Promise<void> {
+  if (!response.ok) {
+    let message: string;
+    try {
+      const body = await response.json();
+      message = body.message || body.error || response.statusText;
+    } catch {
+      message = response.statusText;
+    }
+    throw new Error(`HTTP ${response.status}: ${message}`);
+  }
+}
+
 // ── Categories ──────────────────────────────────────────────────────────────
 
 /** Fetch all categories. */
@@ -58,19 +75,16 @@ export async function updateCategory(id: string, dto: UpdateCategoryDto): Promis
 /** Delete a category by id. */
 export async function deleteCategory(id: string): Promise<void> {
   const response = await fetch(`${BASE_URL}/api/categories/${id}`, { method: 'DELETE' });
-  if (!response.ok) {
-    await handleResponse(response);
-  }
+  await handleEmptyResponse(response);
 }
 
 // ── Notes ───────────────────────────────────────────────────────────────────
 
 /** Fetch all notes, optionally filtered by category id. */
 export async function getNotes(categoryId?: string): Promise<Note[]> {
-  const url = categoryId
-    ? `${BASE_URL}/api/notes?categoryId=${categoryId}`
-    : `${BASE_URL}/api/notes`;
-  const response = await fetch(url, { method: 'GET' });
+  const url = new URL(`${BASE_URL}/api/notes`);
+  if (categoryId) url.searchParams.set('categoryId', categoryId);
+  const response = await fetch(url.toString(), { method: 'GET' });
   return handleResponse<Note[]>(response);
 }
 
@@ -97,7 +111,5 @@ export async function updateNote(id: string, dto: UpdateNoteDto): Promise<Note> 
 /** Delete a note by id. */
 export async function deleteNote(id: string): Promise<void> {
   const response = await fetch(`${BASE_URL}/api/notes/${id}`, { method: 'DELETE' });
-  if (!response.ok) {
-    await handleResponse(response);
-  }
+  await handleEmptyResponse(response);
 }

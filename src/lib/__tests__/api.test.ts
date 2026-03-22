@@ -1,6 +1,7 @@
 import type { Category, Note } from '@/types';
 import {
   handleResponse,
+  handleEmptyResponse,
   getCategories,
   createCategory,
   updateCategory,
@@ -56,6 +57,18 @@ describe('handleResponse', () => {
       json: () => Promise.reject(new Error('invalid json')),
     } as Response;
     await expect(handleResponse(response)).rejects.toThrow('HTTP 500: Internal Server Error');
+  });
+});
+
+describe('handleEmptyResponse', () => {
+  it('throws an error for non-ok responses', async () => {
+    const response = jsonResponse({ message: 'Forbidden' }, 403);
+    await expect(handleEmptyResponse(response)).rejects.toThrow('HTTP 403: Forbidden');
+  });
+
+  it('resolves for ok responses without parsing body', async () => {
+    const response = voidResponse(204);
+    await expect(handleEmptyResponse(response)).resolves.toBeUndefined();
   });
 });
 
