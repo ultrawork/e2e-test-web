@@ -3,30 +3,42 @@
 import { useState } from 'react';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
+import FiltersBar from '@/components/FiltersBar';
+import NoteItem from '@/components/NoteItem';
 
 interface Note {
   id: number;
   text: string;
+  isFavorited: boolean;
 }
 
 export default function NotesPage(): React.ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [favoritesFilter, setFavoritesFilter] = useState(false);
 
-  const filteredNotes = notes.filter((n) =>
-    n.text.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredNotes = notes.filter((n) => {
+    const matchesSearch = n.text.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFavorites = !favoritesFilter || n.isFavorited;
+    return matchesSearch && matchesFavorites;
+  });
+
+  const isFiltering = !!searchQuery || favoritesFilter;
 
   function addNote(): void {
     const text = input.trim();
     if (!text) return;
-    setNotes((prev) => [...prev, { id: Date.now(), text }]);
+    setNotes((prev) => [...prev, { id: Date.now(), text, isFavorited: false }]);
     setInput('');
   }
 
   function deleteNote(id: number): void {
     setNotes((prev) => prev.filter((n) => n.id !== id));
+  }
+
+  function toggleFavorite(id: number): void {
+    setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, isFavorited: !n.isFavorited } : n)));
   }
 
   return (
@@ -58,29 +70,13 @@ export default function NotesPage(): React.ReactElement {
 
       <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
-      <NotesCounter totalCount={notes.length} filteredCount={searchQuery ? filteredNotes.length : undefined} />
+      <FiltersBar favoritesOnly={favoritesFilter} onFavoritesChange={setFavoritesFilter} />
+
+      <NotesCounter totalCount={notes.length} filteredCount={isFiltering ? filteredNotes.length : undefined} />
 
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {filteredNotes.map((note) => (
-          <li
-            key={note.id}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '0.5rem 0',
-              borderBottom: '1px solid #eee',
-            }}
-          >
-            <span>{note.text}</span>
-            <button
-              onClick={() => deleteNote(note.id)}
-              aria-label={`Delete note: ${note.text}`}
-              style={{ padding: '0.25rem 0.5rem' }}
-            >
-              Delete
-            </button>
-          </li>
+          <NoteItem key={note.id} note={note} onDelete={deleteNote} onToggleFavorite={toggleFavorite} />
         ))}
       </ul>
     </main>

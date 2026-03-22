@@ -10,7 +10,7 @@ export default function NotesCounter({ totalCount, filteredCount }: NotesCounter
       : `Всего заметок: ${totalCount}`;
 
   return (
-    <p role="status" aria-live="polite" style={{ marginBottom: '1rem', color: '#555' }}>
+    <p role="status" aria-live="polite" data-testid="notes-counter" style={{ marginBottom: '1rem', color: '#555' }}>
       {text}
     </p>
   );

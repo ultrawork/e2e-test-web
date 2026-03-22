@@ -17,6 +17,7 @@ export default function SearchBar({ value, onChange, placeholder = 'Поиск �
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
+          data-testid="search-input"
           style={{ flex: 1, padding: '0.5rem' }}
         />
         {value && (

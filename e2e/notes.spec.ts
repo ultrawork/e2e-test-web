@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { createNote, toggleFavoriteByTitle, setFavoritesFilter, setSearchQuery, deleteNoteByTitle, expectCounters } from './utils/helpers';
 
 test.describe('Notes App', () => {
   test('SC-001: Home page displays heading, welcome text, and link', async ({ page }) => {
@@ -147,5 +148,65 @@ test.describe('Notes App', () => {
 
     await expect(page.getByText('Важная Заметка')).toBeVisible();
     await expect(page.getByText('Найдено: 1 из 1')).toBeVisible();
+  });
+
+  test('SC-012: Disabling favorites filter restores full list', async ({ page }) => {
+    await page.goto('/notes');
+
+    await createNote(page, 'Заметка 1');
+    await createNote(page, 'Заметка 2');
+    await expectCounters(page, { total: 2 });
+
+    await toggleFavoriteByTitle(page, 'Заметка 1');
+
+    await setFavoritesFilter(page, true);
+
+    await expect(page.getByText('Заметка 1')).toBeVisible();
+    await expect(page.getByText('Заметка 2')).not.toBeVisible();
+    await expectCounters(page, { found: 1, of: 2 });
+
+    await setFavoritesFilter(page, false);
+
+    await expect(page.getByText('Заметка 1')).toBeVisible();
+    await expect(page.getByText('Заметка 2')).toBeVisible();
+    await expectCounters(page, { total: 2 });
+  });
+
+  test('SC-013: Favorites filter combined with text search', async ({ page }) => {
+    await page.goto('/notes');
+
+    await createNote(page, 'Купить молоко');
+    await createNote(page, 'Купить хлеб');
+    await createNote(page, 'Позвонить маме');
+
+    await toggleFavoriteByTitle(page, 'Купить молоко');
+    await toggleFavoriteByTitle(page, 'Позвонить маме');
+
+    await setFavoritesFilter(page, true);
+
+    await setSearchQuery(page, 'Купить');
+
+    await expect(page.getByText('Купить молоко')).toBeVisible();
+    await expect(page.getByText('Купить хлеб')).not.toBeVisible();
+    await expect(page.getByText('Позвонить маме')).not.toBeVisible();
+    await expectCounters(page, { found: 1, of: 3 });
+  });
+
+  test('SC-014: Deleting a favorited note while filter is active', async ({ page }) => {
+    await page.goto('/notes');
+
+    await createNote(page, 'Заметка X');
+    await createNote(page, 'Заметка Y');
+
+    await toggleFavoriteByTitle(page, 'Заметка X');
+    await toggleFavoriteByTitle(page, 'Заметка Y');
+
+    await setFavoritesFilter(page, true);
+
+    await deleteNoteByTitle(page, 'Заметка X');
+
+    await expect(page.getByText('Заметка X')).not.toBeVisible();
+    await expect(page.getByText('Заметка Y')).toBeVisible();
+    await expectCounters(page, { found: 1, of: 1 });
   });
 });
