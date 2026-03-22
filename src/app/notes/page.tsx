@@ -1,37 +1,81 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
-
-interface Note {
-  id: number;
-  text: string;
-}
+import { Note } from '@/types';
+import {
+  getNotes,
+  createNote,
+  deleteNote as apiDeleteNote,
+  toggleFavorite as apiToggleFavorite,
+} from '@/lib/api';
 
 export default function NotesPage(): React.ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getNotes()
+      .then((data) => setNotes(data))
+      .catch((err) => setError(err.message))
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const filteredNotes = notes.filter((n) =>
-    n.text.toLowerCase().includes(searchQuery.toLowerCase())
+    n.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  function addNote(): void {
+  async function addNote(): Promise<void> {
     const text = input.trim();
     if (!text) return;
-    setNotes((prev) => [...prev, { id: Date.now(), text }]);
-    setInput('');
+    try {
+      const newNote = await createNote({ title: text, content: text });
+      setNotes((prev) => [...prev, newNote]);
+      setInput('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create note');
+    }
   }
 
-  function deleteNote(id: number): void {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
+  async function deleteNote(id: string): Promise<void> {
+    try {
+      await apiDeleteNote(id);
+      setNotes((prev) => prev.filter((n) => n.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete note');
+    }
+  }
+
+  async function toggleFavorite(id: string): Promise<void> {
+    try {
+      const updated = await apiToggleFavorite(id);
+      setNotes((prev) => prev.map((n) => (n.id === id ? updated : n)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to toggle favorite');
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+        <p data-testid="loading">Loading...</p>
+      </main>
+    );
   }
 
   return (
     <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
       <h1>Notes</h1>
+
+      {error && (
+        <p role="alert" style={{ color: 'red', marginBottom: '1rem' }}>
+          {error}
+        </p>
+      )}
 
       <form
         onSubmit={(e) => {
@@ -72,14 +116,24 @@ export default function NotesPage(): React.ReactElement {
               borderBottom: '1px solid #eee',
             }}
           >
-            <span>{note.text}</span>
-            <button
-              onClick={() => deleteNote(note.id)}
-              aria-label={`Delete note: ${note.text}`}
-              style={{ padding: '0.25rem 0.5rem' }}
-            >
-              Delete
-            </button>
+            <span>{note.title}</span>
+            <div style={{ display: 'flex', gap: '0.25rem' }}>
+              <button
+                onClick={() => toggleFavorite(note.id)}
+                data-testid={`favorite-button-${note.id}`}
+                aria-label={`Toggle favorite: ${note.title}`}
+                style={{ padding: '0.25rem 0.5rem' }}
+              >
+                {note.isFavorited ? '★' : '☆'}
+              </button>
+              <button
+                onClick={() => deleteNote(note.id)}
+                aria-label={`Delete note: ${note.title}`}
+                style={{ padding: '0.25rem 0.5rem' }}
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>

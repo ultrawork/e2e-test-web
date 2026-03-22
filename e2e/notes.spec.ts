@@ -1,6 +1,73 @@
 import { test, expect } from '@playwright/test';
 
+interface MockNote {
+  id: string;
+  title: string;
+  content: string;
+  isFavorited: boolean;
+  categories: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 test.describe('Notes App', () => {
+  let mockNotes: MockNote[];
+  let nextId: number;
+
+  test.beforeEach(async ({ page }) => {
+    mockNotes = [];
+    nextId = 1;
+
+    await page.route('**/api/notes/*/favorite', async (route) => {
+      if (route.request().method() !== 'PATCH') {
+        await route.fallback();
+        return;
+      }
+      const url = route.request().url();
+      const id = url.split('/api/notes/')[1].split('/favorite')[0];
+      const note = mockNotes.find((n) => n.id === id);
+      if (!note) {
+        await route.fulfill({ status: 404, json: { error: 'Not found' } });
+        return;
+      }
+      note.isFavorited = !note.isFavorited;
+      await route.fulfill({ status: 200, json: note });
+    });
+
+    await page.route('**/api/notes/*', async (route) => {
+      if (route.request().method() !== 'DELETE') {
+        await route.fallback();
+        return;
+      }
+      const url = route.request().url();
+      const id = url.split('/api/notes/')[1];
+      mockNotes = mockNotes.filter((n) => n.id !== id);
+      await route.fulfill({ status: 204 });
+    });
+
+    await page.route('**/api/notes', async (route) => {
+      const method = route.request().method();
+      if (method === 'GET') {
+        await route.fulfill({ status: 200, json: mockNotes });
+      } else if (method === 'POST') {
+        const body = route.request().postDataJSON();
+        const newNote: MockNote = {
+          id: String(nextId++),
+          title: body.title,
+          content: body.content,
+          isFavorited: false,
+          categories: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        mockNotes.push(newNote);
+        await route.fulfill({ status: 201, json: newNote });
+      } else {
+        await route.fallback();
+      }
+    });
+  });
+
   test('SC-001: Home page displays heading, welcome text, and link', async ({ page }) => {
     await page.goto('/');
 
@@ -43,6 +110,7 @@ test.describe('Notes App', () => {
 
     await page.getByLabel('New note').fill('Заметка А');
     await page.getByRole('button', { name: 'Add' }).click();
+    await expect(page.getByText('Заметка А')).toBeVisible();
 
     await page.getByLabel('New note').fill('Заметка Б');
     await page.getByRole('button', { name: 'Add' }).click();
@@ -80,9 +148,11 @@ test.describe('Notes App', () => {
 
     await page.getByLabel('New note').fill('Купить молоко');
     await page.getByRole('button', { name: 'Add' }).click();
+    await expect(page.getByText('Купить молоко')).toBeVisible();
 
     await page.getByLabel('New note').fill('Позвонить маме');
     await page.getByRole('button', { name: 'Add' }).click();
+    await expect(page.getByText('Позвонить маме')).toBeVisible();
 
     await page.getByLabel('New note').fill('Купить хлеб');
     await page.getByRole('button', { name: 'Add' }).click();
@@ -102,6 +172,7 @@ test.describe('Notes App', () => {
 
     await page.getByLabel('New note').fill('Заметка раз');
     await page.getByRole('button', { name: 'Add' }).click();
+    await expect(page.getByText('Заметка раз')).toBeVisible();
 
     await page.getByLabel('New note').fill('Заметка два');
     await page.getByRole('button', { name: 'Add' }).click();
@@ -147,5 +218,21 @@ test.describe('Notes App', () => {
 
     await expect(page.getByText('Важная Заметка')).toBeVisible();
     await expect(page.getByText('Найдено: 1 из 1')).toBeVisible();
+  });
+
+  test('SC-010: Toggle favorite marks and unmarks a note', async ({ page }) => {
+    await page.goto('/notes');
+
+    await page.getByLabel('New note').fill('Избранная заметка');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    const favButton = page.getByTestId('favorite-button-1');
+    await expect(favButton).toHaveText('☆');
+
+    await favButton.click();
+    await expect(favButton).toHaveText('★');
+
+    await favButton.click();
+    await expect(favButton).toHaveText('☆');
   });
 });
