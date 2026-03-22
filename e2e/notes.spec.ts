@@ -148,4 +148,47 @@ test.describe('Notes App', () => {
     await expect(page.getByText('Важная Заметка')).toBeVisible();
     await expect(page.getByText('Найдено: 1 из 1')).toBeVisible();
   });
+
+  test('SC-010: Adding a note with one category shows a CategoryBadge', async ({ page }) => {
+    await page.goto('/notes');
+
+    await page.getByLabel('Work').check();
+    await page.getByLabel('New note').fill('Заметка с категорией');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    const noteItem = page.getByRole('listitem').filter({ hasText: 'Заметка с категорией' });
+    await expect(noteItem.getByLabel('Category: Work')).toBeVisible();
+  });
+
+  test('SC-011: Adding a note with multiple categories shows multiple badges', async ({ page }) => {
+    await page.goto('/notes');
+
+    await page.getByLabel('Personal').check();
+    await page.getByLabel('Urgent').check();
+    await page.getByLabel('New note').fill('Заметка с 2 категориями');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    const noteItem = page.getByRole('listitem').filter({ hasText: 'Заметка с 2 категориями' });
+    await expect(noteItem.getByLabel('Category: Personal')).toBeVisible();
+    await expect(noteItem.getByLabel('Category: Urgent')).toBeVisible();
+  });
+
+  test('SC-012: CategoryBadge has proper contrast color via YIQ', async ({ page }) => {
+    await page.goto('/notes');
+
+    await page.getByRole('checkbox', { name: 'Work' }).check();
+    await page.getByLabel('New note').fill('Светлый бэйдж');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await page.getByRole('checkbox', { name: 'Work' }).uncheck();
+    await page.getByRole('checkbox', { name: 'Urgent' }).check();
+    await page.getByLabel('New note').fill('Тёмный бэйдж');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    const workBadge = page.getByLabel('Category: Work', { exact: true });
+    await expect(workBadge).toHaveCSS('color', 'rgb(0, 0, 0)');
+
+    const urgentBadge = page.getByLabel('Category: Urgent', { exact: true });
+    await expect(urgentBadge).toHaveCSS('color', 'rgb(255, 255, 255)');
+  });
 });
