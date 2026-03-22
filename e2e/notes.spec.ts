@@ -148,4 +148,48 @@ test.describe('Notes App', () => {
     await expect(page.getByText('Важная Заметка')).toBeVisible();
     await expect(page.getByText('Найдено: 1 из 1')).toBeVisible();
   });
+
+  test('SC-010: Toggle favorite star for a note', async ({ page }) => {
+    await page.goto('/notes');
+
+    await page.getByLabel('New note').fill('Избранная 1');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    const noteItem = page.locator('li', { hasText: 'Избранная 1' });
+    const favBtn = noteItem.getByRole('button', { name: 'Toggle favorite' });
+
+    await expect(favBtn).toHaveText('☆');
+
+    await favBtn.click();
+    await expect(favBtn).toHaveText('★');
+
+    await favBtn.click();
+    await expect(favBtn).toHaveText('☆');
+  });
+
+  test('SC-011: Favorites filter shows only favorited notes with correct counter', async ({ page }) => {
+    await page.goto('/notes');
+
+    await page.getByLabel('New note').fill('A');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await page.getByLabel('New note').fill('B');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await page.getByLabel('New note').fill('C');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await page.locator('li', { hasText: 'A' }).getByRole('button', { name: 'Toggle favorite' }).click();
+    await expect(page.locator('li', { hasText: 'A' }).getByRole('button', { name: 'Toggle favorite' })).toHaveText('★');
+
+    await page.locator('li', { hasText: 'C' }).getByRole('button', { name: 'Toggle favorite' }).click();
+    await expect(page.locator('li', { hasText: 'C' }).getByRole('button', { name: 'Toggle favorite' })).toHaveText('★');
+
+    await page.getByRole('button', { name: 'Только избранные' }).click();
+
+    await expect(page.locator('li', { hasText: 'A' })).toBeVisible();
+    await expect(page.locator('li', { hasText: 'C' })).toBeVisible();
+    await expect(page.locator('li', { hasText: 'B' })).not.toBeVisible();
+    await expect(page.getByText('Найдено: 2 из 3')).toBeVisible();
+  });
 });

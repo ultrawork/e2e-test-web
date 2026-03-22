@@ -7,26 +7,32 @@ import SearchBar from '@/components/SearchBar';
 interface Note {
   id: number;
   text: string;
+  isFavorited: boolean;
 }
 
 export default function NotesPage(): React.ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
-  const filteredNotes = notes.filter((n) =>
-    n.text.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredNotes = notes
+    .filter((n) => (showFavoritesOnly ? n.isFavorited : true))
+    .filter((n) => n.text.toLowerCase().includes(searchQuery.toLowerCase()));
 
   function addNote(): void {
     const text = input.trim();
     if (!text) return;
-    setNotes((prev) => [...prev, { id: Date.now(), text }]);
+    setNotes((prev) => [...prev, { id: Date.now(), text, isFavorited: false }]);
     setInput('');
   }
 
   function deleteNote(id: number): void {
     setNotes((prev) => prev.filter((n) => n.id !== id));
+  }
+
+  function toggleFavorite(id: number): void {
+    setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, isFavorited: !n.isFavorited } : n)));
   }
 
   return (
@@ -56,9 +62,21 @@ export default function NotesPage(): React.ReactElement {
         </button>
       </form>
 
-      <SearchBar value={searchQuery} onChange={setSearchQuery} />
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '1rem' }}>
+        <SearchBar value={searchQuery} onChange={setSearchQuery} />
+        <button
+          onClick={() => setShowFavoritesOnly((v) => !v)}
+          aria-pressed={showFavoritesOnly}
+          style={{ padding: '0.5rem 1rem', whiteSpace: 'nowrap' }}
+        >
+          Только избранные
+        </button>
+      </div>
 
-      <NotesCounter totalCount={notes.length} filteredCount={searchQuery ? filteredNotes.length : undefined} />
+      <NotesCounter
+        totalCount={notes.length}
+        filteredCount={showFavoritesOnly || searchQuery ? filteredNotes.length : undefined}
+      />
 
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {filteredNotes.map((note) => (
@@ -73,13 +91,23 @@ export default function NotesPage(): React.ReactElement {
             }}
           >
             <span>{note.text}</span>
-            <button
-              onClick={() => deleteNote(note.id)}
-              aria-label={`Delete note: ${note.text}`}
-              style={{ padding: '0.25rem 0.5rem' }}
-            >
-              Delete
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={() => toggleFavorite(note.id)}
+                aria-label="Toggle favorite"
+                data-testid={`favorite-button-${note.id}`}
+                style={{ padding: '0.25rem 0.5rem' }}
+              >
+                {note.isFavorited ? '★' : '☆'}
+              </button>
+              <button
+                onClick={() => deleteNote(note.id)}
+                aria-label={`Delete note: ${note.text}`}
+                style={{ padding: '0.25rem 0.5rem' }}
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>
