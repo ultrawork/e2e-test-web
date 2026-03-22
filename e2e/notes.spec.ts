@@ -192,4 +192,85 @@ test.describe('Notes App', () => {
     await expect(page.locator('li', { hasText: 'B' })).not.toBeVisible();
     await expect(page.getByText('Найдено: 2 из 3')).toBeVisible();
   });
+
+  test('SC-012: Disabling favorites filter restores full list', async ({ page }) => {
+    await page.goto('/notes');
+
+    await page.getByLabel('New note').fill('Первая');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await page.getByLabel('New note').fill('Вторая');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await page.locator('li', { hasText: 'Первая' }).getByRole('button', { name: 'Toggle favorite' }).click();
+    await expect(page.locator('li', { hasText: 'Первая' }).getByRole('button', { name: 'Toggle favorite' })).toHaveText('★');
+
+    await page.getByRole('button', { name: 'Только избранные' }).click();
+
+    await expect(page.locator('li', { hasText: 'Первая' })).toBeVisible();
+    await expect(page.locator('li', { hasText: 'Вторая' })).not.toBeVisible();
+
+    await page.getByRole('button', { name: 'Только избранные' }).click();
+
+    await expect(page.locator('li', { hasText: 'Первая' })).toBeVisible();
+    await expect(page.locator('li', { hasText: 'Вторая' })).toBeVisible();
+    await expect(page.getByText('Всего заметок: 2')).toBeVisible();
+  });
+
+  test('SC-013: Favorites filter combined with text search', async ({ page }) => {
+    await page.goto('/notes');
+
+    await page.getByLabel('New note').fill('Купить молоко');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await page.getByLabel('New note').fill('Купить хлеб');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await page.getByLabel('New note').fill('Позвонить маме');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await page.locator('li', { hasText: 'Купить молоко' }).getByRole('button', { name: 'Toggle favorite' }).click();
+    await expect(page.locator('li', { hasText: 'Купить молоко' }).getByRole('button', { name: 'Toggle favorite' })).toHaveText('★');
+
+    await page.locator('li', { hasText: 'Позвонить маме' }).getByRole('button', { name: 'Toggle favorite' }).click();
+    await expect(page.locator('li', { hasText: 'Позвонить маме' }).getByRole('button', { name: 'Toggle favorite' })).toHaveText('★');
+
+    await page.getByRole('button', { name: 'Только избранные' }).click();
+
+    await expect(page.locator('li', { hasText: 'Купить молоко' })).toBeVisible();
+    await expect(page.locator('li', { hasText: 'Позвонить маме' })).toBeVisible();
+    await expect(page.locator('li', { hasText: 'Купить хлеб' })).not.toBeVisible();
+
+    await page.getByPlaceholder('Поиск заметок...').fill('Купить');
+
+    await expect(page.locator('li', { hasText: 'Купить молоко' })).toBeVisible();
+    await expect(page.locator('li', { hasText: 'Позвонить маме' })).not.toBeVisible();
+    await expect(page.locator('li', { hasText: 'Купить хлеб' })).not.toBeVisible();
+    await expect(page.getByText('Найдено: 1 из 3')).toBeVisible();
+  });
+
+  test('SC-014: Deleting a favorited note while filter is active', async ({ page }) => {
+    await page.goto('/notes');
+
+    await page.getByLabel('New note').fill('Заметка X');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await page.getByLabel('New note').fill('Заметка Y');
+    await page.getByRole('button', { name: 'Add' }).click();
+
+    await page.locator('li', { hasText: 'Заметка X' }).getByRole('button', { name: 'Toggle favorite' }).click();
+    await page.locator('li', { hasText: 'Заметка Y' }).getByRole('button', { name: 'Toggle favorite' }).click();
+
+    await page.getByRole('button', { name: 'Только избранные' }).click();
+
+    await expect(page.locator('li', { hasText: 'Заметка X' })).toBeVisible();
+    await expect(page.locator('li', { hasText: 'Заметка Y' })).toBeVisible();
+    await expect(page.getByText('Найдено: 2 из 2')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Delete note: Заметка X' }).click();
+
+    await expect(page.locator('li', { hasText: 'Заметка X' })).not.toBeVisible();
+    await expect(page.locator('li', { hasText: 'Заметка Y' })).toBeVisible();
+    await expect(page.getByText('Найдено: 1 из 1')).toBeVisible();
+  });
 });
