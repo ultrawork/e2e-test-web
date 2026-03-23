@@ -47,7 +47,6 @@ export async function createNote(dto: CreateNoteDto): Promise<Note> {
 export async function deleteNote(id: string): Promise<void> {
   const res = await fetch(`${BASE_URL}/notes/${id}`, {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
   });
 
   if (!res.ok) {
