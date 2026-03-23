@@ -1,6 +1,26 @@
 import { test, expect } from '@playwright/test';
 
+const apiUrl = process.env.API_URL || 'http://localhost:4000';
+
+/** Helper: delete all notes so each test starts clean. */
+async function deleteAllNotes(request: import('@playwright/test').APIRequestContext) {
+  const res = await request.get(`${apiUrl}/api/notes`);
+  if (!res.ok()) return;
+  const notes = await res.json();
+  for (const note of notes) {
+    await request.delete(`${apiUrl}/api/notes/${note.id}`);
+  }
+}
+
 test.describe('Notes App', () => {
+  test.beforeEach(async ({ request }) => {
+    await deleteAllNotes(request);
+  });
+
+  test.afterEach(async ({ request }) => {
+    await deleteAllNotes(request);
+  });
+
   test('SC-001: Home page displays heading, welcome text, and link', async ({ page }) => {
     await page.goto('/');
 
@@ -22,24 +42,26 @@ test.describe('Notes App', () => {
 
   test('SC-003: Adding notes increments the counter', async ({ page }) => {
     await page.goto('/notes');
+    await expect(page.getByText('Loading...')).toBeHidden({ timeout: 10000 });
 
     await expect(page.getByText('Всего заметок: 0')).toBeVisible();
 
     await page.getByLabel('New note').fill('Первая заметка');
     await page.getByRole('button', { name: 'Add' }).click();
 
-    await expect(page.getByText('Первая заметка')).toBeVisible();
+    await expect(page.getByText('Первая заметка')).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('Всего заметок: 1')).toBeVisible();
 
     await page.getByLabel('New note').fill('Вторая заметка');
     await page.getByRole('button', { name: 'Add' }).click();
 
-    await expect(page.getByText('Вторая заметка')).toBeVisible();
+    await expect(page.getByText('Вторая заметка')).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('Всего заметок: 2')).toBeVisible();
   });
 
   test('SC-004: Deleting notes decrements the counter', async ({ page }) => {
     await page.goto('/notes');
+    await expect(page.getByText('Loading...')).toBeHidden({ timeout: 10000 });
 
     await page.getByLabel('New note').fill('Заметка А');
     await page.getByRole('button', { name: 'Add' }).click();
@@ -47,16 +69,16 @@ test.describe('Notes App', () => {
     await page.getByLabel('New note').fill('Заметка Б');
     await page.getByRole('button', { name: 'Add' }).click();
 
-    await expect(page.getByText('Всего заметок: 2')).toBeVisible();
+    await expect(page.getByText('Всего заметок: 2')).toBeVisible({ timeout: 10000 });
 
     await page.getByRole('button', { name: 'Delete note: Заметка А' }).click();
 
-    await expect(page.getByText('Заметка А')).not.toBeVisible();
+    await expect(page.getByText('Заметка А')).not.toBeVisible({ timeout: 10000 });
     await expect(page.getByText('Всего заметок: 1')).toBeVisible();
 
     await page.getByRole('button', { name: 'Delete note: Заметка Б' }).click();
 
-    await expect(page.getByText('Заметка Б')).not.toBeVisible();
+    await expect(page.getByText('Заметка Б')).not.toBeVisible({ timeout: 10000 });
     await expect(page.getByText('Всего заметок: 0')).toBeVisible();
   });
 
@@ -77,6 +99,7 @@ test.describe('Notes App', () => {
 
   test('SC-006: Search filters notes by title', async ({ page }) => {
     await page.goto('/notes');
+    await expect(page.getByText('Loading...')).toBeHidden({ timeout: 10000 });
 
     await page.getByLabel('New note').fill('Купить молоко');
     await page.getByRole('button', { name: 'Add' }).click();
@@ -87,7 +110,7 @@ test.describe('Notes App', () => {
     await page.getByLabel('New note').fill('Купить хлеб');
     await page.getByRole('button', { name: 'Add' }).click();
 
-    await expect(page.getByText('Всего заметок: 3')).toBeVisible();
+    await expect(page.getByText('Всего заметок: 3')).toBeVisible({ timeout: 10000 });
 
     await page.getByPlaceholder('Поиск заметок...').fill('Купить');
 
@@ -99,12 +122,15 @@ test.describe('Notes App', () => {
 
   test('SC-007: Clearing search shows all notes', async ({ page }) => {
     await page.goto('/notes');
+    await expect(page.getByText('Loading...')).toBeHidden({ timeout: 10000 });
 
     await page.getByLabel('New note').fill('Заметка раз');
     await page.getByRole('button', { name: 'Add' }).click();
 
     await page.getByLabel('New note').fill('Заметка два');
     await page.getByRole('button', { name: 'Add' }).click();
+
+    await expect(page.getByText('Всего заметок: 2')).toBeVisible({ timeout: 10000 });
 
     await page.getByPlaceholder('Поиск заметок...').fill('раз');
 
@@ -120,11 +146,12 @@ test.describe('Notes App', () => {
 
   test('SC-008: Search with no results shows empty list', async ({ page }) => {
     await page.goto('/notes');
+    await expect(page.getByText('Loading...')).toBeHidden({ timeout: 10000 });
 
     await page.getByLabel('New note').fill('Тестовая заметка');
     await page.getByRole('button', { name: 'Add' }).click();
 
-    await expect(page.getByText('Всего заметок: 1')).toBeVisible();
+    await expect(page.getByText('Всего заметок: 1')).toBeVisible({ timeout: 10000 });
 
     await page.getByPlaceholder('Поиск заметок...').fill('несуществующий текст');
 
@@ -134,6 +161,7 @@ test.describe('Notes App', () => {
 
   test('SC-009: Search is case-insensitive', async ({ page }) => {
     await page.goto('/notes');
+    await expect(page.getByText('Loading...')).toBeHidden({ timeout: 10000 });
 
     await page.getByLabel('New note').fill('Важная Заметка');
     await page.getByRole('button', { name: 'Add' }).click();
