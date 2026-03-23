@@ -11,15 +11,16 @@ export default function NotesPage(): React.ReactElement {
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [operationError, setOperationError] = useState<string | null>(null);
 
   useEffect(() => {
     getNotes()
       .then((data) => {
         setNotes(data);
       })
-      .catch((err: Error) => {
-        setError(err.message);
+      .catch((err: unknown) => {
+        setLoadError(err instanceof Error ? err.message : 'Unknown error');
       })
       .finally(() => {
         setLoading(false);
@@ -33,30 +34,34 @@ export default function NotesPage(): React.ReactElement {
   async function addNote(): Promise<void> {
     const text = input.trim();
     if (!text) return;
+    setOperationError(null);
     try {
       const created = await createNote({ title: text, content: text });
       setNotes((prev) => [...prev, created]);
       setInput('');
     } catch (err: unknown) {
-      setError((err as Error).message);
+      setOperationError(err instanceof Error ? err.message : 'Unknown error');
     }
   }
 
   async function handleDeleteNote(id: string): Promise<void> {
+    setOperationError(null);
     try {
       await deleteNote(id);
       setNotes((prev) => prev.filter((n) => n.id !== id));
     } catch (err: unknown) {
-      setError((err as Error).message);
+      setOperationError(err instanceof Error ? err.message : 'Unknown error');
     }
   }
 
   if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error}</p>;
+  if (loadError) return <p>Error: {loadError}</p>;
 
   return (
     <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
       <h1>Notes</h1>
+
+      {operationError && <p style={{ color: 'red' }}>Error: {operationError}</p>}
 
       <form
         onSubmit={(e) => {
