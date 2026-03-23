@@ -9,6 +9,7 @@ import type { Note } from '@/types';
 export default function NotesPage(): React.ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>();
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -20,6 +21,8 @@ export default function NotesPage(): React.ReactElement {
     try {
       const data = await fetchNotes();
       setNotes(data);
+    } catch {
+      // fetchNotes returns [] on 401; other errors are caught here
     } finally {
       setLoading(false);
     }
@@ -32,14 +35,24 @@ export default function NotesPage(): React.ReactElement {
   async function addNote(): Promise<void> {
     const title = input.trim();
     if (!title) return;
-    const note = await createNote(title, '');
-    setNotes((prev) => [...prev, note]);
-    setInput('');
+    try {
+      setError(undefined);
+      const note = await createNote(title, '');
+      setNotes((prev) => [...prev, note]);
+      setInput('');
+    } catch {
+      setError('Failed to create note');
+    }
   }
 
   async function handleDelete(id: string): Promise<void> {
-    await deleteNote(id);
-    setNotes((prev) => prev.filter((n) => n.id !== id));
+    try {
+      setError(undefined);
+      await deleteNote(id);
+      setNotes((prev) => prev.filter((n) => n.id !== id));
+    } catch {
+      setError('Failed to delete note');
+    }
   }
 
   if (loading) {
@@ -77,6 +90,8 @@ export default function NotesPage(): React.ReactElement {
           Add
         </button>
       </form>
+
+      {error && <p role="alert" style={{ color: 'red' }}>{error}</p>}
 
       <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
