@@ -7,12 +7,14 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api';
  * Throws an Error with the response status text when the response is not ok.
  */
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const headers: HeadersInit = { ...options?.headers };
+  if (options?.body) {
+    (headers as Record<string, string>)['Content-Type'] = 'application/json';
+  }
+
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
+    headers,
   });
 
   if (!res.ok) {

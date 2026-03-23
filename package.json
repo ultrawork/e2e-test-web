@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "test": "vitest run"
+    "lint": "next lint"
   },
   "dependencies": {
     "next": "15.1.0",
@@ -20,7 +19,6 @@
     "@types/react": "19.0.0",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.1.0",
-    "typescript": "5.7.2",
-    "vitest": "^2.1.9"
+    "typescript": "5.7.2"
   }
 }
