@@ -22,7 +22,7 @@ export default function NotesPage(): React.ReactElement {
       const data = await fetchNotes();
       setNotes(data);
     } catch {
-      // fetchNotes returns [] on 401; other errors are caught here
+      setError('Failed to load notes');
     } finally {
       setLoading(false);
     }

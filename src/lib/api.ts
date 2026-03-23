@@ -2,6 +2,10 @@ import { Note } from '@/types';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
+if (!process.env.NEXT_PUBLIC_API_URL && typeof window !== 'undefined') {
+  console.warn('NEXT_PUBLIC_API_URL is not set; falling back to http://localhost:3000/api');
+}
+
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('token');
@@ -37,7 +41,7 @@ export async function createNote(title: string, content: string): Promise<Note> 
 
 /** Delete a note by id. */
 export async function deleteNote(id: string): Promise<void> {
-  const res = await fetch(`${baseUrl}/notes/${id}`, {
+  const res = await fetch(`${baseUrl}/notes/${encodeURIComponent(id)}`, {
     method: 'DELETE',
     headers: headers(),
   });
