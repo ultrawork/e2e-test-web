@@ -70,7 +70,7 @@ describe('NotesPage', () => {
     await user.type(screen.getByLabelText('New note'), 'Buy milk');
     await user.click(screen.getByRole('button', { name: 'Add' }));
 
-    expect(mockedCreateNote).toHaveBeenCalledWith('Buy milk', '');
+    expect(mockedCreateNote).toHaveBeenCalledWith('Buy milk', 'Buy milk');
     await waitFor(() => {
       expect(screen.getByText('Buy milk')).toBeTruthy();
     });

@@ -37,7 +37,7 @@ export default function NotesPage(): React.ReactElement {
     if (!title) return;
     try {
       setError(undefined);
-      const note = await createNote(title, '');
+      const note = await createNote(title, title);
       setNotes((prev) => [...prev, note]);
       setInput('');
     } catch {
