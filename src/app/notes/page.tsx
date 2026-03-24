@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
 import type { Note } from '@/types';
-import { getNotes, createNote as apiCreateNote, deleteNote as apiDeleteNote } from '@/lib/api';
+import { getNotes, createNote as apiCreateNote, deleteNote as apiDeleteNote, toggleFavorite as apiToggleFavorite } from '@/lib/api';
 
 export default function NotesPage(): React.ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -14,7 +14,6 @@ export default function NotesPage(): React.ReactElement {
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
-  const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   useEffect(() => {
@@ -25,20 +24,14 @@ export default function NotesPage(): React.ReactElement {
       .finally(() => setIsLoading(false));
   }, []);
 
-  function isFavorited(id: string): boolean {
-    return favoritedIds.has(id);
-  }
-
-  function toggleFavorite(id: string): void {
-    setFavoritedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
+  async function toggleFavorite(id: string): Promise<void> {
+    setOperationError(null);
+    try {
+      const updated = await apiToggleFavorite(id);
+      setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
+    } catch (err: unknown) {
+      setOperationError(err instanceof Error ? err.message : 'Failed to toggle favorite');
+    }
   }
 
   async function addNote(): Promise<void> {
@@ -68,7 +61,7 @@ export default function NotesPage(): React.ReactElement {
   }
 
   const filteredNotes = notes
-    .filter((n) => !showFavoritesOnly || isFavorited(n.id))
+    .filter((n) => !showFavoritesOnly || n.isFavorited)
     .filter((n) => n.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
@@ -146,10 +139,10 @@ export default function NotesPage(): React.ReactElement {
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 onClick={() => toggleFavorite(note.id)}
-                aria-label={isFavorited(note.id) ? `Unfavorite note: ${note.title}` : `Favorite note: ${note.title}`}
+                aria-label={note.isFavorited ? `Unfavorite note: ${note.title}` : `Favorite note: ${note.title}`}
                 style={{ padding: '0.25rem 0.5rem' }}
               >
-                {isFavorited(note.id) ? '\u2605' : '\u2606'}
+                {note.isFavorited ? '\u2605' : '\u2606'}
               </button>
               <button
                 onClick={() => handleDeleteNote(note.id)}

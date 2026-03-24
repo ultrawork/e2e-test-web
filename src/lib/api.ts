@@ -53,3 +53,11 @@ export async function deleteNote(id: string): Promise<void> {
     throw new Error(`Request failed: ${res.status} ${res.statusText}`);
   }
 }
+
+/**
+ * Toggles the favorite status of a note by id.
+ * Returns the updated note from the server.
+ */
+export async function toggleFavorite(id: string): Promise<Note> {
+  return request<Note>(`/notes/${id}/favorite`, { method: 'PATCH' });
+}

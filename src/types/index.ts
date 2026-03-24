@@ -9,6 +9,7 @@ export interface Note {
   id: string;
   title: string;
   content: string;
+  isFavorited: boolean;
   userId: string;
   categories: Category[];
   createdAt: string;
