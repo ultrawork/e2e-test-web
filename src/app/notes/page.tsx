@@ -1,37 +1,113 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
-
-interface Note {
-  id: number;
-  text: string;
-}
+import { getNotes, createNote, deleteNote, getToken, clearToken } from '@/lib/api';
+import type { Note } from '@/types';
 
 export default function NotesPage(): React.ReactElement {
+  const router = useRouter();
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+
+  const loadNotes = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getNotes();
+      setNotes(data);
+    } catch (err) {
+      console.error(err);
+      setError('Ошибка загрузки заметок');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const storedToken = getToken();
+    setToken(storedToken);
+    if (!storedToken) {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (token) loadNotes();
+  }, [token, loadNotes]);
 
   const filteredNotes = notes.filter((n) =>
-    n.text.toLowerCase().includes(searchQuery.toLowerCase())
+    n.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  function addNote(): void {
+  async function addNote(): Promise<void> {
     const text = input.trim();
     if (!text) return;
-    setNotes((prev) => [...prev, { id: Date.now(), text }]);
-    setInput('');
+    try {
+      const note = await createNote(text);
+      setNotes((prev) => [...prev, note]);
+      setInput('');
+    } catch (err) {
+      console.error(err);
+      setError('Ошибка создания заметки');
+    }
   }
 
-  function deleteNote(id: number): void {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
+  async function handleDelete(id: string): Promise<void> {
+    try {
+      await deleteNote(id);
+      setNotes((prev) => prev.filter((n) => n.id !== id));
+    } catch (err) {
+      console.error(err);
+      setError('Ошибка удаления заметки');
+    }
+  }
+
+  function handleLogout(): void {
+    clearToken();
+    router.push('/login');
+  }
+
+  if (loading) {
+    return (
+      <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+        <h1>Notes</h1>
+        <p>Загрузка...</p>
+      </main>
+    );
+  }
+
+  if (!token) {
+    return (
+      <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+        <h1>Notes</h1>
+        <p>Необходима авторизация</p>
+        <Link href="/login">Войти</Link>
+      </main>
+    );
   }
 
   return (
     <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
-      <h1>Notes</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Notes</h1>
+        <button onClick={handleLogout} style={{ padding: '0.25rem 0.5rem' }}>
+          Выйти
+        </button>
+      </div>
+
+      {error && (
+        <p role="alert" style={{ color: 'red' }}>
+          {error}
+        </p>
+      )}
 
       <form
         onSubmit={(e) => {
@@ -72,10 +148,10 @@ export default function NotesPage(): React.ReactElement {
               borderBottom: '1px solid #eee',
             }}
           >
-            <span>{note.text}</span>
+            <span>{note.title}</span>
             <button
-              onClick={() => deleteNote(note.id)}
-              aria-label={`Delete note: ${note.text}`}
+              onClick={() => handleDelete(note.id)}
+              aria-label={`Delete note: ${note.title}`}
               style={{ padding: '0.25rem 0.5rem' }}
             >
               Delete
