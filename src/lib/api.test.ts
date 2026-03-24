@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getNotes, createNote, deleteNote } from './api';
+import { getNotes, createNote, deleteNote, toggleFavorite } from './api';
 
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
@@ -76,5 +76,25 @@ describe('deleteNote', () => {
     mockFetch.mockResolvedValue({ ok: false, status: 404, statusText: 'Not Found' } as Response);
 
     await expect(deleteNote('missing')).rejects.toThrow('Request failed: 404');
+  });
+});
+
+describe('toggleFavorite', () => {
+  it('sends PATCH to /notes/:id/favorite and returns updated note', async () => {
+    const updated = { id: '3', title: 'Note', content: 'Body', isFavorited: true, userId: 'u1', categories: [], createdAt: '', updatedAt: '' };
+    mockFetch.mockResolvedValue(jsonResponse(updated));
+
+    const result = await toggleFavorite('3');
+
+    expect(result).toEqual(updated);
+    const [url, options] = mockFetch.mock.calls[0];
+    expect(url).toBe('http://localhost:3000/api/notes/3/favorite');
+    expect(options.method).toBe('PATCH');
+  });
+
+  it('throws on non-ok response', async () => {
+    mockFetch.mockResolvedValue(jsonResponse(null, 404));
+
+    await expect(toggleFavorite('missing')).rejects.toThrow('Request failed: 404');
   });
 });
