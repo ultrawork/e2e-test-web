@@ -15,8 +15,7 @@ export default function NotesPage(): React.ReactElement {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const token = typeof window !== 'undefined' ? getToken() : null;
+  const [token, setToken] = useState<string | null>(null);
 
   const loadNotes = useCallback(async () => {
     setLoading(true);
@@ -24,7 +23,8 @@ export default function NotesPage(): React.ReactElement {
     try {
       const data = await getNotes();
       setNotes(data);
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError('Ошибка загрузки заметок');
     } finally {
       setLoading(false);
@@ -32,8 +32,15 @@ export default function NotesPage(): React.ReactElement {
   }, []);
 
   useEffect(() => {
-    if (!token) return;
-    loadNotes();
+    const storedToken = getToken();
+    setToken(storedToken);
+    if (!storedToken) {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (token) loadNotes();
   }, [token, loadNotes]);
 
   const filteredNotes = notes.filter((n) =>
@@ -47,7 +54,8 @@ export default function NotesPage(): React.ReactElement {
       const note = await createNote(text);
       setNotes((prev) => [...prev, note]);
       setInput('');
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError('Ошибка создания заметки');
     }
   }
@@ -56,7 +64,8 @@ export default function NotesPage(): React.ReactElement {
     try {
       await deleteNote(id);
       setNotes((prev) => prev.filter((n) => n.id !== id));
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError('Ошибка удаления заметки');
     }
   }
@@ -66,21 +75,21 @@ export default function NotesPage(): React.ReactElement {
     router.push('/login');
   }
 
+  if (loading) {
+    return (
+      <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+        <h1>Notes</h1>
+        <p>Загрузка...</p>
+      </main>
+    );
+  }
+
   if (!token) {
     return (
       <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
         <h1>Notes</h1>
         <p>Необходима авторизация</p>
         <Link href="/login">Войти</Link>
-      </main>
-    );
-  }
-
-  if (loading) {
-    return (
-      <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
-        <h1>Notes</h1>
-        <p>Загрузка...</p>
       </main>
     );
   }

@@ -13,12 +13,15 @@ export function clearToken(): void {
 }
 
 /** Generic fetch wrapper that adds Authorization header and handles 401. */
-export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function apiRequest<T>(path: string, options: RequestInit = {}, skipAuthRedirect = false): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...((options.headers as Record<string, string>) || {}),
   };
+
+  if (options.body) {
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -30,7 +33,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
   });
 
   if (!response.ok) {
-    if (response.status === 401) {
+    if (response.status === 401 && !skipAuthRedirect) {
       clearToken();
       window.location.href = '/login';
       throw new Error('Unauthorized');
@@ -40,7 +43,9 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
     throw new Error(body.message || `Request failed with status ${response.status}`);
   }
 
-  return response.json();
+  const text = await response.text();
+  if (!text) return undefined as T;
+  return JSON.parse(text) as T;
 }
 
 /** Fetches all notes. */

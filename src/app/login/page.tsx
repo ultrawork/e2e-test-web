@@ -27,7 +27,7 @@ export default function LoginPage(): React.ReactElement {
       const data = await apiRequest<LoginResponse>('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
-      });
+      }, true);
       localStorage.setItem('token', data.token);
       router.push('/notes');
     } catch {

@@ -55,7 +55,7 @@ describe('apiRequest', () => {
     localStorageMock.setItem('token', 'my-token');
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ data: 'test' }),
+      text: () => Promise.resolve(JSON.stringify({ data: 'test' })),
     });
     vi.stubGlobal('fetch', mockFetch);
 
@@ -67,7 +67,6 @@ describe('apiRequest', () => {
       expect.objectContaining({
         headers: expect.objectContaining({
           'Authorization': 'Bearer my-token',
-          'Content-Type': 'application/json',
         }),
       }),
     );
@@ -76,7 +75,7 @@ describe('apiRequest', () => {
   it('does not add Authorization header when no token', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ data: 'test' }),
+      text: () => Promise.resolve(JSON.stringify({ data: 'test' })),
     });
     vi.stubGlobal('fetch', mockFetch);
 
@@ -85,6 +84,37 @@ describe('apiRequest', () => {
 
     const calledHeaders = mockFetch.mock.calls[0][1].headers;
     expect(calledHeaders['Authorization']).toBeUndefined();
+  });
+
+  it('does not add Content-Type header when no body', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ data: 'test' })),
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const { apiRequest } = await import('@/lib/api');
+    await apiRequest('/api/notes', { method: 'GET' });
+
+    const calledHeaders = mockFetch.mock.calls[0][1].headers;
+    expect(calledHeaders['Content-Type']).toBeUndefined();
+  });
+
+  it('adds Content-Type header when body is present', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ id: '1' })),
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const { apiRequest } = await import('@/lib/api');
+    await apiRequest('/api/notes', {
+      method: 'POST',
+      body: JSON.stringify({ text: 'test' }),
+    });
+
+    const calledHeaders = mockFetch.mock.calls[0][1].headers;
+    expect(calledHeaders['Content-Type']).toBe('application/json');
   });
 
   it('clears token and redirects to /login on 401', async () => {
@@ -102,6 +132,19 @@ describe('apiRequest', () => {
     expect(locationMock.href).toBe('/login');
   });
 
+  it('does not redirect on 401 when skipAuthRedirect is true', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: () => Promise.resolve({ message: 'Unauthorized' }),
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const { apiRequest } = await import('@/lib/api');
+    await expect(apiRequest('/api/auth/login', { method: 'POST', body: '{}' }, true)).rejects.toThrow();
+    expect(locationMock.href).toBe('');
+  });
+
   it('throws error with message on non-401 error', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
@@ -114,11 +157,23 @@ describe('apiRequest', () => {
     await expect(apiRequest('/api/notes')).rejects.toThrow('Internal Server Error');
   });
 
+  it('handles empty response body', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve(''),
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const { apiRequest } = await import('@/lib/api');
+    const result = await apiRequest<void>('/api/notes/1', { method: 'DELETE' });
+    expect(result).toBeUndefined();
+  });
+
   it('passes method and body in options', async () => {
     localStorageMock.setItem('token', 'my-token');
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ id: '1', text: 'new note', createdAt: '2024-01-01' }),
+      text: () => Promise.resolve(JSON.stringify({ id: '1', text: 'new note', createdAt: '2024-01-01' })),
     });
     vi.stubGlobal('fetch', mockFetch);
 
@@ -143,7 +198,7 @@ describe('getNotes', () => {
     const mockNotes = [{ id: '1', text: 'Note 1', createdAt: '2024-01-01' }];
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve(mockNotes),
+      text: () => Promise.resolve(JSON.stringify(mockNotes)),
     });
     vi.stubGlobal('fetch', mockFetch);
 
@@ -163,7 +218,7 @@ describe('createNote', () => {
     const mockNote = { id: '1', text: 'New note', createdAt: '2024-01-01' };
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve(mockNote),
+      text: () => Promise.resolve(JSON.stringify(mockNote)),
     });
     vi.stubGlobal('fetch', mockFetch);
 
@@ -185,7 +240,7 @@ describe('deleteNote', () => {
   it('sends DELETE to /api/notes/:id', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({}),
+      text: () => Promise.resolve(''),
     });
     vi.stubGlobal('fetch', mockFetch);
 
