@@ -1,32 +1,67 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
-
-interface Note {
-  id: number;
-  text: string;
-}
+import { fetchNotes, createNote, deleteNote } from '@/lib/api';
+import type { Note } from '@/types';
 
 export default function NotesPage(): React.ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>();
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredNotes = notes.filter((n) =>
-    n.text.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    loadNotes();
+  }, []);
 
-  function addNote(): void {
-    const text = input.trim();
-    if (!text) return;
-    setNotes((prev) => [...prev, { id: Date.now(), text }]);
-    setInput('');
+  async function loadNotes(): Promise<void> {
+    try {
+      const data = await fetchNotes();
+      setNotes(data);
+    } catch {
+      setError('Failed to load notes');
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function deleteNote(id: number): void {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
+  const filteredNotes = notes.filter((n) =>
+    n.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  async function addNote(): Promise<void> {
+    const title = input.trim();
+    if (!title) return;
+    try {
+      setError(undefined);
+      const note = await createNote(title, '');
+      setNotes((prev) => [...prev, note]);
+      setInput('');
+    } catch {
+      setError('Failed to create note');
+    }
+  }
+
+  async function handleDelete(id: string): Promise<void> {
+    try {
+      setError(undefined);
+      await deleteNote(id);
+      setNotes((prev) => prev.filter((n) => n.id !== id));
+    } catch {
+      setError('Failed to delete note');
+    }
+  }
+
+  if (loading) {
+    return (
+      <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+        <h1>Notes</h1>
+        <p>Loading...</p>
+      </main>
+    );
   }
 
   return (
@@ -56,6 +91,8 @@ export default function NotesPage(): React.ReactElement {
         </button>
       </form>
 
+      {error && <p role="alert" style={{ color: 'red' }}>{error}</p>}
+
       <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
       <NotesCounter totalCount={notes.length} filteredCount={searchQuery ? filteredNotes.length : undefined} />
@@ -72,10 +109,10 @@ export default function NotesPage(): React.ReactElement {
               borderBottom: '1px solid #eee',
             }}
           >
-            <span>{note.text}</span>
+            <span>{note.title}</span>
             <button
-              onClick={() => deleteNote(note.id)}
-              aria-label={`Delete note: ${note.text}`}
+              onClick={() => handleDelete(note.id)}
+              aria-label={`Delete note: ${note.title}`}
               style={{ padding: '0.25rem 0.5rem' }}
             >
               Delete
