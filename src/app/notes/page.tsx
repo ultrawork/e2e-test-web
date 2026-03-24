@@ -1,32 +1,62 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
-
-interface Note {
-  id: number;
-  text: string;
-}
+import type { Note } from '@/types';
+import { getNotes, createNote, deleteNote, toggleFavorite } from '@/lib/api';
 
 export default function NotesPage(): React.ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
-  const [input, setInput] = useState('');
+  const [titleInput, setTitleInput] = useState('');
+  const [contentInput, setContentInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [operationError, setOperationError] = useState<string | null>(null);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
-  const filteredNotes = notes.filter((n) =>
-    n.text.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    setIsLoading(true);
+    getNotes()
+      .then(setNotes)
+      .catch((e: Error) => setLoadError(e.message))
+      .finally(() => setIsLoading(false));
+  }, []);
 
-  function addNote(): void {
-    const text = input.trim();
-    if (!text) return;
-    setNotes((prev) => [...prev, { id: Date.now(), text }]);
-    setInput('');
+  const filteredNotes = notes
+    .filter((n) => !showFavoritesOnly || n.isFavorited)
+    .filter((n) =>
+      n.title.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+
+  async function handleAddNote(): Promise<void> {
+    const title = titleInput.trim();
+    const content = contentInput.trim();
+    if (!title) return;
+    setOperationError(null);
+    try {
+      const note = await createNote({ title, content });
+      setNotes((prev) => [...prev, note]);
+      setTitleInput('');
+      setContentInput('');
+    } catch (e: unknown) {
+      setOperationError((e as Error).message);
+    }
   }
 
-  function deleteNote(id: number): void {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
+  async function handleDeleteNote(id: string): Promise<void> {
+    setOperationError(null);
+    try {
+      await deleteNote(id);
+      setNotes((prev) => prev.filter((n) => n.id !== id));
+    } catch (e: unknown) {
+      setOperationError((e as Error).message);
+    }
+  }
+
+  function handleToggleFavorite(id: string): void {
+    setNotes((prev) => toggleFavorite(prev, id));
   }
 
   return (
@@ -36,29 +66,69 @@ export default function NotesPage(): React.ReactElement {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          addNote();
+          handleAddNote();
         }}
-        style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}
+        style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}
       >
-        <label htmlFor="new-note" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
-          New note
-        </label>
-        <input
-          id="new-note"
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Enter a note"
-          style={{ flex: 1, padding: '0.5rem' }}
-        />
-        <button type="submit" style={{ padding: '0.5rem 1rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <label htmlFor="note-title" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+            Title
+          </label>
+          <input
+            id="note-title"
+            type="text"
+            value={titleInput}
+            onChange={(e) => setTitleInput(e.target.value)}
+            placeholder="Enter a note"
+            style={{ flex: 1, padding: '0.5rem' }}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <label htmlFor="note-content" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+            Content
+          </label>
+          <textarea
+            id="note-content"
+            value={contentInput}
+            onChange={(e) => setContentInput(e.target.value)}
+            placeholder="Note content"
+            style={{ flex: 1, padding: '0.5rem' }}
+          />
+        </div>
+        <button type="submit" style={{ padding: '0.5rem 1rem', alignSelf: 'flex-start' }}>
           Add
         </button>
       </form>
 
+      {operationError && (
+        <p role="alert" style={{ color: 'red', marginBottom: '0.5rem' }}>
+          {operationError}
+        </p>
+      )}
+
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+        <button
+          onClick={() => setShowFavoritesOnly((prev) => !prev)}
+          style={{ padding: '0.25rem 0.5rem' }}
+        >
+          {showFavoritesOnly ? 'All' : '★ Only'}
+        </button>
+      </div>
+
       <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
-      <NotesCounter totalCount={notes.length} filteredCount={searchQuery ? filteredNotes.length : undefined} />
+      <NotesCounter
+        totalCount={notes.length}
+        filteredCount={searchQuery || showFavoritesOnly ? filteredNotes.length : undefined}
+      />
+
+      {isLoading && <p>Loading...</p>}
+
+      {loadError && (
+        <p role="alert" style={{ color: 'red' }}>
+          {loadError}
+        </p>
+      )}
 
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {filteredNotes.map((note) => (
@@ -72,14 +142,24 @@ export default function NotesPage(): React.ReactElement {
               borderBottom: '1px solid #eee',
             }}
           >
-            <span>{note.text}</span>
-            <button
-              onClick={() => deleteNote(note.id)}
-              aria-label={`Delete note: ${note.text}`}
-              style={{ padding: '0.25rem 0.5rem' }}
-            >
-              Delete
-            </button>
+            <span>{note.title}</span>
+            <div style={{ display: 'flex', gap: '0.25rem' }}>
+              <button
+                data-testid={`favorite-button-${note.id}`}
+                aria-label="Toggle favorite"
+                onClick={() => handleToggleFavorite(note.id)}
+                style={{ padding: '0.25rem 0.5rem', cursor: 'pointer' }}
+              >
+                {note.isFavorited ? '★' : '☆'}
+              </button>
+              <button
+                onClick={() => handleDeleteNote(note.id)}
+                aria-label={`Delete note: ${note.title}`}
+                style={{ padding: '0.25rem 0.5rem' }}
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>
