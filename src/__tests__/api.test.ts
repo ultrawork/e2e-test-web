@@ -230,7 +230,7 @@ describe('createNote', () => {
       `${MOCK_BASE_URL}/api/notes`,
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ text: 'New note' }),
+        body: JSON.stringify({ title: 'New note', content: 'New note' }),
       }),
     );
   });
