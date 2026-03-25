@@ -1,32 +1,79 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
-
-interface Note {
-  id: number;
-  text: string;
-}
+import type { Note } from '@/types/note';
+import { fetchNotes, createNote, deleteNote, getDevToken, ApiError } from '@/lib/api';
 
 export default function NotesPage(): React.ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const filteredNotes = notes.filter((n) =>
-    n.text.toLowerCase().includes(searchQuery.toLowerCase())
+    n.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  function addNote(): void {
-    const text = input.trim();
-    if (!text) return;
-    setNotes((prev) => [...prev, { id: Date.now(), text }]);
-    setInput('');
+  function getErrorMessage(err: unknown): string {
+    if (err instanceof ApiError) {
+      if (err.status === 401 || err.status === 403) {
+        localStorage.removeItem('token');
+        return 'Ошибка авторизации. Попробуйте ещё раз.';
+      }
+      return `Ошибка сервера: ${err.message}`;
+    }
+    return 'Ошибка сети. Проверьте соединение.';
   }
 
-  function deleteNote(id: number): void {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
+  const loadNotes = useCallback(async (): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchNotes();
+      setNotes(data);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    async function init(): Promise<void> {
+      if (process.env.NODE_ENV === 'development' && !localStorage.getItem('token')) {
+        try {
+          await getDevToken();
+        } catch {
+          // proceed without token — loadNotes will handle auth error
+        }
+      }
+      await loadNotes();
+    }
+    init();
+  }, [loadNotes]);
+
+  async function addNote(): Promise<void> {
+    const title = input.trim();
+    if (!title) return;
+    try {
+      const note = await createNote({ title, content: '' });
+      setNotes((prev) => [...prev, note]);
+      setInput('');
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  async function handleDeleteNote(id: string): Promise<void> {
+    try {
+      await deleteNote(id);
+      setNotes((prev) => prev.filter((n) => n.id !== id));
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
   }
 
   return (
@@ -60,29 +107,40 @@ export default function NotesPage(): React.ReactElement {
 
       <NotesCounter totalCount={notes.length} filteredCount={searchQuery ? filteredNotes.length : undefined} />
 
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {filteredNotes.map((note) => (
-          <li
-            key={note.id}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '0.5rem 0',
-              borderBottom: '1px solid #eee',
-            }}
-          >
-            <span>{note.text}</span>
-            <button
-              onClick={() => deleteNote(note.id)}
-              aria-label={`Delete note: ${note.text}`}
-              style={{ padding: '0.25rem 0.5rem' }}
+      {loading && <p>Загрузка...</p>}
+
+      {error && (
+        <div>
+          <p role="alert">{error}</p>
+          <button onClick={loadNotes}>Повторить</button>
+        </div>
+      )}
+
+      {!loading && (
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          {filteredNotes.map((note) => (
+            <li
+              key={note.id}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.5rem 0',
+                borderBottom: '1px solid #eee',
+              }}
             >
-              Delete
-            </button>
-          </li>
-        ))}
-      </ul>
+              <span>{note.title}</span>
+              <button
+                onClick={() => handleDeleteNote(note.id)}
+                aria-label={`Delete note: ${note.title}`}
+                style={{ padding: '0.25rem 0.5rem' }}
+              >
+                Delete
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }
