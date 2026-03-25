@@ -58,8 +58,13 @@ test.describe('Notes API Integration — UI', () => {
     await expect(page.getByRole('heading', { name: 'Notes' })).toBeVisible();
   });
 
-  test('SC-002: Create a note via the form', async ({ page }) => {
-    await loginViaUI(page);
+  test('SC-002: Create a note via the form', async ({ page, request }) => {
+    // Obtain token via API to avoid dependency on login page rendering
+    const token = await getDevToken(request);
+    await page.goto('/');
+    await page.evaluate((t) => localStorage.setItem('token', t), token);
+    await page.goto('/notes');
+    await expect(page.getByRole('heading', { name: 'Notes' })).toBeVisible();
 
     // Get initial count
     const counterText = await page.getByText(/Всего заметок: \d+/).textContent();
