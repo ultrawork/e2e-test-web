@@ -159,9 +159,9 @@ test.describe('Notes API Integration', () => {
     await createNoteViaApi(apiReq, token, 'Apple Pie Recipe');
     await createNoteViaApi(apiReq, token, 'Banana Smoothie');
 
-    await page.goto('/notes');
+    await page.goto('/');
     await page.evaluate((t) => localStorage.setItem('token', t), token);
-    await page.reload();
+    await page.goto('/notes');
 
     // Wait for notes to load
     await expect(page.getByText('Apple Pie Recipe')).toBeVisible({ timeout: 10000 });
