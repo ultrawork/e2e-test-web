@@ -190,13 +190,8 @@ test.describe('Notes API Integration', () => {
     const alert = page.locator('p[role="alert"]');
     await expect(alert).toBeVisible({ timeout: 15000 });
 
-    // Should contain an error message
-    const alertText = await alert.textContent();
-    expect(
-      alertText?.includes('Ошибка сети') ||
-      alertText?.includes('Ошибка сервера') ||
-      alertText?.includes('Ошибка авторизации')
-    ).toBeTruthy();
+    // Should contain an error message (use auto-retrying assertion)
+    await expect(alert).toContainText(/Ошибка (сети|сервера|авторизации)/);
 
     // Retry button should be visible
     await expect(page.getByRole('button', { name: 'Повторить' })).toBeVisible();
