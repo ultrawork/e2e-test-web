@@ -75,8 +75,8 @@ describe('getNotes', () => {
 });
 
 describe('createNote', () => {
-  it('sends POST request with title and empty content', async () => {
-    const mockNote = { id: '2', title: 'New', content: '', userId: 'u1', createdAt: '', updatedAt: '', categories: [] };
+  it('sends POST request with title and content equal to title', async () => {
+    const mockNote = { id: '2', title: 'New', content: 'New', userId: 'u1', createdAt: '', updatedAt: '', categories: [] };
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify(mockNote), { status: 201 })
     );
@@ -88,7 +88,7 @@ describe('createNote', () => {
       expect.stringContaining('/api/notes'),
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ title: 'New', content: '' }),
+        body: JSON.stringify({ title: 'New', content: 'New' }),
       }),
     );
     expect(note).toEqual(mockNote);

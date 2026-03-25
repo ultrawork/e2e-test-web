@@ -72,7 +72,7 @@ export default function NotesPage(): React.ReactElement {
   }
 
   if (loading) {
-    return <main style={{ padding: '2rem', fontFamily: 'system-ui' }}><p>Загрузка...</p></main>;
+    return <main style={{ padding: '2rem', fontFamily: 'system-ui' }}><p data-testid="loading">Loading...</p></main>;
   }
 
   return (

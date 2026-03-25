@@ -59,7 +59,7 @@ export function getNotes(): Promise<Note[]> {
 
 /** Создать заметку с указанным заголовком. */
 export function createNote(title: string): Promise<Note> {
-  return apiRequest<Note>('POST', '/api/notes', { title, content: '' });
+  return apiRequest<Note>('POST', '/api/notes', { title, content: title });
 }
 
 /** Удалить заметку по id. */
