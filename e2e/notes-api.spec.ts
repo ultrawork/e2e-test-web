@@ -112,8 +112,13 @@ test.describe('Notes API Integration — UI', () => {
     await expect(page.getByRole('alert')).not.toBeVisible();
   });
 
-  test('SC-004: Filter notes via search bar', async ({ page }) => {
-    await loginViaUI(page);
+  test('SC-004: Filter notes via search bar', async ({ page, request }) => {
+    // Obtain token via API to avoid dependency on login page rendering
+    const token = await getDevToken(request);
+    await page.goto('/');
+    await page.evaluate((t) => localStorage.setItem('token', t), token);
+    await page.goto('/notes');
+    await expect(page.getByRole('heading', { name: 'Notes' })).toBeVisible();
 
     // Create two notes with distinct titles
     await page.getByLabel('New note').fill('Alpha unique note');
