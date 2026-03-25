@@ -31,11 +31,11 @@ export default function NotesPage(): React.ReactElement {
 
   useEffect(() => {
     if (!getToken()) {
-      router.push('/login');
+      router.replace('/login');
       return;
     }
     loadNotes();
-  }, [router, loadNotes]);
+  }, [loadNotes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredNotes = notes.filter((n) =>
     n.title.toLowerCase().includes(searchQuery.toLowerCase())
