@@ -214,8 +214,14 @@ test.describe('Notes API Integration', () => {
     // "Recover" backend by removing route interception
     await page.unrouteAll({ behavior: 'ignoreErrors' });
 
-    // Click retry
-    await page.getByRole('button', { name: 'Повторить' }).click();
+    // Click retry and wait for the notes API call to succeed
+    await Promise.all([
+      page.waitForResponse(
+        (resp) => resp.url().includes('/api/notes') && resp.ok(),
+        { timeout: 15000 },
+      ),
+      page.getByRole('button', { name: 'Повторить' }).click(),
+    ]);
 
     // Error should disappear and page should load successfully
     await expect(alert).not.toBeVisible({ timeout: 15000 });
