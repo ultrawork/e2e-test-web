@@ -213,7 +213,8 @@ test.describe('Notes API Integration', () => {
     await page.reload();
 
     // Error should appear
-    await expect(page.getByRole('alert')).toBeVisible({ timeout: 15000 });
+    const alert = page.locator('p[role="alert"]');
+    await expect(alert).toBeVisible({ timeout: 15000 });
     await expect(page.getByRole('button', { name: 'Повторить' })).toBeVisible();
 
     // "Recover" backend by removing route interception
@@ -223,7 +224,7 @@ test.describe('Notes API Integration', () => {
     await page.getByRole('button', { name: 'Повторить' }).click();
 
     // Error should disappear and page should load successfully
-    await expect(page.getByRole('alert')).not.toBeVisible({ timeout: 15000 });
+    await expect(alert).not.toBeVisible({ timeout: 15000 });
   });
 
   // SC-07: API — get dev token
