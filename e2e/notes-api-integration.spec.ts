@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const API_URL = process.env.API_URL || process.env.BASE_URL || 'http://localhost:4000';
+const API_URL = process.env.API_URL || 'http://localhost:4000';
 
 /**
  * Helper: obtain a dev token from the backend API
