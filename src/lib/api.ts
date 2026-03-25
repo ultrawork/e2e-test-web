@@ -9,6 +9,7 @@ export class ApiError extends Error {
   ) {
     super(message);
     this.name = 'ApiError';
+    Object.setPrototypeOf(this, ApiError.prototype);
   }
 }
 
@@ -17,10 +18,11 @@ function getToken(): string | null {
   return localStorage.getItem('token');
 }
 
-function getHeaders(): HeadersInit {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+function getHeaders(withBody = false): HeadersInit {
+  const headers: Record<string, string> = {};
+  if (withBody) {
+    headers['Content-Type'] = 'application/json';
+  }
   const token = getToken();
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -55,7 +57,7 @@ export async function fetchNotes(): Promise<Note[]> {
 export async function createNote(dto: CreateNoteDto): Promise<Note> {
   const res = await fetch(`${BASE_URL}/api/notes`, {
     method: 'POST',
-    headers: getHeaders(),
+    headers: getHeaders(true),
     body: JSON.stringify(dto),
   });
   return handleResponse<Note>(res);

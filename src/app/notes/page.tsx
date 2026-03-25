@@ -6,6 +6,16 @@ import SearchBar from '@/components/SearchBar';
 import type { Note } from '@/types/note';
 import { fetchNotes, createNote, deleteNote, getDevToken, ApiError } from '@/lib/api';
 
+function getErrorMessage(err: unknown): string {
+  if (err instanceof ApiError) {
+    if (err.status === 401 || err.status === 403) {
+      return 'Ошибка авторизации. Попробуйте ещё раз.';
+    }
+    return `Ошибка сервера: ${err.message}`;
+  }
+  return 'Ошибка сети. Проверьте соединение.';
+}
+
 export default function NotesPage(): React.ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState('');
@@ -17,24 +27,23 @@ export default function NotesPage(): React.ReactElement {
     n.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  function getErrorMessage(err: unknown): string {
-    if (err instanceof ApiError) {
-      if (err.status === 401 || err.status === 403) {
-        localStorage.removeItem('token');
-        return 'Ошибка авторизации. Попробуйте ещё раз.';
-      }
-      return `Ошибка сервера: ${err.message}`;
-    }
-    return 'Ошибка сети. Проверьте соединение.';
-  }
-
   const loadNotes = useCallback(async (): Promise<void> => {
     setLoading(true);
     setError(null);
+    if (process.env.NODE_ENV === 'development' && !localStorage.getItem('token')) {
+      try {
+        await getDevToken();
+      } catch {
+        // proceed without token — fetchNotes will handle auth error
+      }
+    }
     try {
       const data = await fetchNotes();
       setNotes(data);
     } catch (err) {
+      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+        localStorage.removeItem('token');
+      }
       setError(getErrorMessage(err));
     } finally {
       setLoading(false);
@@ -42,17 +51,7 @@ export default function NotesPage(): React.ReactElement {
   }, []);
 
   useEffect(() => {
-    async function init(): Promise<void> {
-      if (process.env.NODE_ENV === 'development' && !localStorage.getItem('token')) {
-        try {
-          await getDevToken();
-        } catch {
-          // proceed without token — loadNotes will handle auth error
-        }
-      }
-      await loadNotes();
-    }
-    init();
+    loadNotes();
   }, [loadNotes]);
 
   async function addNote(): Promise<void> {

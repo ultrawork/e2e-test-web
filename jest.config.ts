@@ -22,7 +22,6 @@ const config: Config = {
     ],
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  passWithNoTests: true,
 };
 
 export default config;
