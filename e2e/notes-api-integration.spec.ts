@@ -154,14 +154,13 @@ test.describe('Notes API Integration', () => {
   });
 
   // SC-04: Filter notes via search bar
-  test('SC-04: filter notes via search bar', async ({ page }) => {
-    const apiReq = page.request;
-    await createNoteViaApi(apiReq, token, 'Apple Pie Recipe');
-    await createNoteViaApi(apiReq, token, 'Banana Smoothie');
+  test('SC-04: filter notes via search bar', async ({ page, request }) => {
+    await createNoteViaApi(request, token, 'Apple Pie Recipe');
+    await createNoteViaApi(request, token, 'Banana Smoothie');
 
-    await page.goto('/');
-    await page.evaluate((t) => localStorage.setItem('token', t), token);
     await page.goto('/notes');
+    await page.evaluate((t) => localStorage.setItem('token', t), token);
+    await page.reload();
 
     // Wait for notes to load
     await expect(page.getByText('Apple Pie Recipe')).toBeVisible({ timeout: 10000 });
