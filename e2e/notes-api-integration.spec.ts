@@ -188,7 +188,7 @@ test.describe('Notes API Integration', () => {
     await page.reload();
 
     // Wait for error to appear
-    const alert = page.getByRole('alert');
+    const alert = page.locator('p[role="alert"]');
     await expect(alert).toBeVisible({ timeout: 15000 });
 
     // Should contain an error message
