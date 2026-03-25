@@ -14,6 +14,6 @@ cp .env.local.example .env.local
 
 | Переменная | Описание | По умолчанию |
 |---|---|---|
-| `NEXT_PUBLIC_API_URL` | Базовый URL backend API | `http://localhost:3000` |
+| `NEXT_PUBLIC_API_URL` | Базовый URL backend API | `http://localhost:4000` |
 
 В dev-режиме токен запрашивается автоматически через `POST /api/auth/dev-token` при отсутствии токена в localStorage.

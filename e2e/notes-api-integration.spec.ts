@@ -119,7 +119,7 @@ test.describe('Notes API Integration', () => {
     // Fill in and submit
     const uniqueTitle = `Test Note E2E ${Date.now()}`;
     await page.getByLabel('New note').fill(uniqueTitle);
-    await page.getByRole('button', { name: 'Add' }).click();
+    await page.getByRole('button', { name: 'Добавить' }).click();
 
     // Note should appear in the list
     await expect(page.getByText(uniqueTitle)).toBeVisible({ timeout: 10000 });
@@ -144,7 +144,7 @@ test.describe('Notes API Integration', () => {
     await expect(page.getByText('Note To Delete SC03')).toBeVisible({ timeout: 10000 });
 
     // Click delete
-    await page.getByRole('button', { name: 'Delete note: Note To Delete SC03' }).click();
+    await page.getByRole('button', { name: 'Удалить заметку: Note To Delete SC03' }).click();
 
     // Note should disappear
     await expect(page.getByText('Note To Delete SC03')).not.toBeVisible({ timeout: 10000 });

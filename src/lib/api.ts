@@ -1,6 +1,6 @@
 import type { Note, CreateNoteDto } from '@/types/note';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 export class ApiError extends Error {
   constructor(
@@ -47,6 +47,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** Fetches the list of notes for the authenticated user. */
 export async function fetchNotes(): Promise<Note[]> {
   const res = await fetch(`${BASE_URL}/api/notes`, {
     headers: getHeaders(),
@@ -54,6 +55,7 @@ export async function fetchNotes(): Promise<Note[]> {
   return handleResponse<Note[]>(res);
 }
 
+/** Creates a new note and returns the created entity. */
 export async function createNote(dto: CreateNoteDto): Promise<Note> {
   const res = await fetch(`${BASE_URL}/api/notes`, {
     method: 'POST',
@@ -63,6 +65,7 @@ export async function createNote(dto: CreateNoteDto): Promise<Note> {
   return handleResponse<Note>(res);
 }
 
+/** Deletes the note with the given id. */
 export async function deleteNote(id: string): Promise<void> {
   const res = await fetch(`${BASE_URL}/api/notes/${id}`, {
     method: 'DELETE',
@@ -71,6 +74,10 @@ export async function deleteNote(id: string): Promise<void> {
   return handleResponse<void>(res);
 }
 
+/**
+ * Requests a short-lived dev token from the backend and stores it in localStorage.
+ * Only intended for use in development environments.
+ */
 export async function getDevToken(): Promise<string> {
   const res = await fetch(`${BASE_URL}/api/auth/dev-token`, {
     method: 'POST',

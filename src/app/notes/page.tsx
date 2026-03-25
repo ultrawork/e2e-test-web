@@ -98,7 +98,7 @@ export default function NotesPage(): React.ReactElement {
           style={{ flex: 1, padding: '0.5rem' }}
         />
         <button type="submit" style={{ padding: '0.5rem 1rem' }}>
-          Add
+          Добавить
         </button>
       </form>
 
@@ -131,10 +131,10 @@ export default function NotesPage(): React.ReactElement {
               <span>{note.title}</span>
               <button
                 onClick={() => handleDeleteNote(note.id)}
-                aria-label={`Delete note: ${note.title}`}
+                aria-label={`Удалить заметку: ${note.title}`}
                 style={{ padding: '0.25rem 0.5rem' }}
               >
-                Delete
+                Удалить
               </button>
             </li>
           ))}
