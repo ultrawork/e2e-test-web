@@ -10,13 +10,12 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 export default function LoginPage(): React.ReactElement {
   const router = useRouter();
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     if (getToken()) {
+      setRedirecting(true);
       router.push('/notes');
-    } else {
-      setLoading(false);
     }
   }, [router]);
 
@@ -43,7 +42,7 @@ export default function LoginPage(): React.ReactElement {
     }
   }
 
-  if (loading) {
+  if (redirecting) {
     return <main style={{ padding: '2rem', fontFamily: 'system-ui' }}><p>Загрузка...</p></main>;
   }
 
