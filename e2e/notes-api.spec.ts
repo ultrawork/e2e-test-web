@@ -85,8 +85,13 @@ test.describe('Notes API Integration — UI', () => {
     await expect(page.getByRole('alert')).not.toBeVisible();
   });
 
-  test('SC-003: Delete a note via Delete button', async ({ page }) => {
-    await loginViaUI(page);
+  test('SC-003: Delete a note via Delete button', async ({ page, request }) => {
+    // Obtain token via API to avoid dependency on login page rendering
+    const token = await getDevToken(request);
+    await page.goto('/');
+    await page.evaluate((t) => localStorage.setItem('token', t), token);
+    await page.goto('/notes');
+    await expect(page.getByRole('heading', { name: 'Notes' })).toBeVisible();
 
     // Create a note to ensure we have one to delete
     const noteTitle = 'Note to delete E2E';
