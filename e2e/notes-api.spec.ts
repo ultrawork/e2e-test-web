@@ -45,8 +45,13 @@ test.describe('Notes API Integration — UI', () => {
     await expect(page.getByRole('heading', { name: 'Вход' })).toBeVisible();
   });
 
-  test('SC-001: Notes load from backend on page open', async ({ page }) => {
-    await loginViaUI(page);
+  test('SC-001: Notes load from backend on page open', async ({ page, request }) => {
+    // Obtain token via API to avoid dependency on login page rendering
+    const token = await getDevToken(request);
+    await page.goto('/');
+    await page.evaluate((t) => localStorage.setItem('token', t), token);
+    await page.goto('/notes');
+
     // After login, notes page is displayed with counter
     await expect(page.getByText(/Всего заметок: \d+/)).toBeVisible();
     // The heading is present and loading is done
