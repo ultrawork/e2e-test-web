@@ -109,9 +109,9 @@ test.describe('Notes API Integration', () => {
 
   // SC-02: Create a new note via the form
   test('SC-02: create a new note via form', async ({ page }) => {
-    await page.goto('/notes');
+    await page.goto('/');
     await page.evaluate((t) => localStorage.setItem('token', t), token);
-    await page.reload();
+    await page.goto('/notes');
 
     // Wait for loading to finish
     await expect(page.getByText('Загрузка...')).not.toBeVisible({ timeout: 10000 });
