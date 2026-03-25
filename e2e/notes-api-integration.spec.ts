@@ -136,9 +136,9 @@ test.describe('Notes API Integration', () => {
     const apiReq = page.request;
     await createNoteViaApi(apiReq, token, 'Note To Delete SC03');
 
-    await page.goto('/');
-    await page.evaluate((t) => localStorage.setItem('token', t), token);
     await page.goto('/notes');
+    await page.evaluate((t) => localStorage.setItem('token', t), token);
+    await page.reload();
 
     // Wait for the note to appear
     await expect(page.getByText('Note To Delete SC03')).toBeVisible({ timeout: 10000 });
