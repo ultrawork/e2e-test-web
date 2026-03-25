@@ -142,8 +142,14 @@ test.describe('Notes API Integration — UI', () => {
     await expect(page.getByText(/Всего заметок: \d+/)).toBeVisible();
   });
 
-  test('SC-LOGOUT: Logout clears token and redirects to /login', async ({ page }) => {
-    await loginViaUI(page);
+  test('SC-LOGOUT: Logout clears token and redirects to /login', async ({ page, request }) => {
+    // Obtain token via API to avoid dependency on login page rendering
+    const token = await getDevToken(request);
+    await page.goto('/');
+    await page.evaluate((t) => localStorage.setItem('token', t), token);
+    await page.goto('/notes');
+    await expect(page.getByRole('heading', { name: 'Notes' })).toBeVisible();
+
     await page.getByRole('button', { name: 'Выйти' }).click();
     await page.waitForURL('**/login');
     await expect(page.getByRole('heading', { name: 'Вход' })).toBeVisible();
