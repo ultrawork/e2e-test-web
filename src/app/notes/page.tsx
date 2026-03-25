@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
-import { getToken, clearToken, getNotes, createNote, deleteNote } from '@/lib/api';
+import { clearToken, getNotes, createNote, deleteNote } from '@/lib/api';
 import type { Note } from '@/types';
 
 export default function NotesPage(): React.ReactElement {
@@ -30,12 +30,8 @@ export default function NotesPage(): React.ReactElement {
   }, []);
 
   useEffect(() => {
-    if (!getToken()) {
-      router.replace('/login');
-      return;
-    }
     loadNotes();
-  }, [loadNotes]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loadNotes]);
 
   const filteredNotes = notes.filter((n) =>
     n.title.toLowerCase().includes(searchQuery.toLowerCase())
