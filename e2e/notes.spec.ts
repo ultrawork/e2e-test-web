@@ -42,7 +42,7 @@ test.describe('Notes App', () => {
   test('SC-010: /notes without token shows authorization required', async ({ page }) => {
     await page.goto('/notes');
 
-    await expect(page.locator('p[role="alert"]')).toContainText('Необходима авторизация');
+    await expect(page.getByRole('alert')).toContainText('Необходима авторизация');
   });
 
   test.describe('Authenticated', () => {
