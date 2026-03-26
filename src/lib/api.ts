@@ -1,7 +1,7 @@
 import { CreateNoteDto, Note } from '@/types';
 
 export const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api';
+  process.env.NEXT_PUBLIC_API_URL ?? 'http://host.docker.internal:4130/api';
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
