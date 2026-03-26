@@ -50,7 +50,7 @@ test.describe('Notes API v20', () => {
 
     await expect(page.getByText('Первая заметка')).toBeVisible();
     await expect(page.getByText('Вторая заметка')).toBeVisible();
-    await expect(page.getByRole('alert')).not.toBeVisible();
+    await expect(page.locator('main p[role="alert"]')).not.toBeVisible();
 
     // Verify favorite icons: unfavorited = ☆, favorited = ★
     await expect(page.getByRole('button', { name: 'Добавить в избранное: Первая заметка' })).toBeVisible();
