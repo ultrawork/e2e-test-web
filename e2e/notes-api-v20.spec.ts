@@ -25,10 +25,12 @@ test.describe('Notes API v20', () => {
   test('SC-001: Без токена — отображение сообщения об авторизации', async ({ page }) => {
     await page.goto('/notes');
 
-    await expect(page.getByRole('alert')).toHaveText('Необходима авторизация');
+    const alertMsg = page.locator('main p[role="alert"]');
+    await expect(alertMsg).toBeVisible();
+    await expect(alertMsg).toHaveText('Необходима авторизация');
     await expect(page.getByPlaceholder('Enter a note')).not.toBeVisible();
     await expect(page.getByRole('button', { name: 'Add' })).not.toBeVisible();
-    await expect(page.locator('ul')).not.toBeVisible();
+    await expect(page.locator('main ul')).not.toBeVisible();
   });
 
   test('SC-002: С токеном — загрузка списка с отображением избранного', async ({ page }) => {
