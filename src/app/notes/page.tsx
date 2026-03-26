@@ -36,6 +36,7 @@ export default function NotesPage(): React.ReactElement {
   }, [loadNotes]);
 
   /* SC-006: client-side search filters by note.title */
+  /* SC-007: clearing search resets filteredNotes to show all */
   const filteredNotes = notes.filter((n) =>
     n.title.toLowerCase().includes(searchQuery.toLowerCase())
   );

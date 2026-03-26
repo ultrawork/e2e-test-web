@@ -281,6 +281,7 @@ test.describe('Notes App — API интеграция', () => {
     await setToken(page);
 
     await page.goto('/notes');
+    await expect(page.getByText('Всего заметок: 2')).toBeVisible();
 
     await page.getByPlaceholder('Поиск заметок...').fill('раз');
 
