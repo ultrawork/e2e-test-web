@@ -39,7 +39,7 @@ export default function NotesPage(): React.ReactElement {
   /* SC-006: client-side search filters notes by title (rebuild trigger) */
   /* SC-007: clearing search resets filteredNotes to show all – rebuild trigger v2 */
   /* SC-008: when search yields no matches, filteredNotes is empty → counter shows "Найдено: 0 из N" – rebuild trigger v2 */
-  /* SC-009: search is case-insensitive — toLowerCase on both sides */
+  /* SC-009: search is case-insensitive — toLowerCase on both sides – rebuild trigger v2 */
   const filteredNotes = notes.filter((n) =>
     n.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
