@@ -82,7 +82,7 @@ export default function NotesPage(): React.ReactElement {
     return (
       <main data-testid="auth-guard" style={{ padding: '2rem', fontFamily: 'system-ui' }}>
         <h1>Notes</h1>
-        <p role="alert">Необходима авторизация</p>
+        <p role="alert" data-testid="auth-error">Необходима авторизация</p>
       </main>
     );
   }
