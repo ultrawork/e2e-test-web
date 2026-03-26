@@ -1,9 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
-import { setToken } from '@/lib/api';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
+import { useState } from 'react';
 
 export default function LoginPage(): React.ReactElement {
   const [error, setError] = useState('');
@@ -13,7 +10,7 @@ export default function LoginPage(): React.ReactElement {
     setError('');
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/api/auth/dev-token`, {
+      const response = await fetch('/api/auth/dev-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -21,7 +18,7 @@ export default function LoginPage(): React.ReactElement {
         throw new Error(`Ошибка авторизации: ${response.status}`);
       }
       const data = await response.json();
-      setToken(data.token);
+      localStorage.setItem('auth_token', data.token);
       window.location.href = '/notes';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Неизвестная ошибка');
