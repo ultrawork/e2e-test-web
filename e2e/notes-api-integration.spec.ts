@@ -76,7 +76,7 @@ test.describe('Notes API Integration', () => {
     await page.goto('/notes');
 
     // Should show token-not-found error
-    const alert = page.getByRole('alert');
+    const alert = page.locator('p[role="alert"]').filter({ hasText: 'Токен не найден' });
     await expect(alert).toBeVisible();
     await expect(alert).toContainText('Токен не найден');
 
