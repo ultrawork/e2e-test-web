@@ -70,6 +70,7 @@ export default function NotesPage(): React.ReactElement {
     }
   }
 
+  /* auth guard */
   if (error === 'Необходима авторизация') {
     return (
       <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
