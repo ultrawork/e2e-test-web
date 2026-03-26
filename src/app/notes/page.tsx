@@ -44,6 +44,7 @@ export default function NotesPage(): React.ReactElement {
     n.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  /* SC-003: create note via POST /api/notes */
   async function addNote(): Promise<void> {
     const title = input.trim();
     if (!title) return;
