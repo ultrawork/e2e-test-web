@@ -13,6 +13,7 @@ export default function NotesPage(): React.ReactElement {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /* SC-002: load notes list from API on mount */
   const loadNotes = useCallback(async () => {
     setLoading(true);
     try {
