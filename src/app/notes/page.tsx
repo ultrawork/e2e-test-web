@@ -97,7 +97,7 @@ export default function NotesPage(): React.ReactElement {
   }
 
   return (
-    <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+    <main data-testid="notes-page" style={{ padding: '2rem', fontFamily: 'system-ui' }}>
       <h1>Notes</h1>
 
       {error && <p role="alert">{error}</p>}
