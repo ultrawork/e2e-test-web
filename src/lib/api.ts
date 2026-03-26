@@ -1,46 +1,68 @@
-import { Note } from '@/types';
+import { CreateNoteDto, Note } from '@/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+export const BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api';
 
-/** Fetch all notes from the API. */
+function getToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('token');
+}
+
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = getToken();
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers: { ...headers, ...(options.headers as Record<string, string>) },
+    });
+  } catch {
+    throw new Error('Сетевая ошибка. Проверьте подключение к интернету.');
+  }
+
+  if (response.status === 401) {
+    throw new Error(
+      'Необходима авторизация. Сохраните токен в localStorage под ключом "token".'
+    );
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  if (!response.ok) {
+    let message = `Ошибка сервера: ${response.status}`;
+    try {
+      const data = await response.json();
+      if (data?.error) message = data.error;
+    } catch {
+      // ignore parse error, use default message
+    }
+    throw new Error(message);
+  }
+
+  return response.json() as Promise<T>;
+}
+
 export async function getNotes(): Promise<Note[]> {
-  const res = await fetch(`${API_URL}/api/notes`);
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || err.message || res.statusText);
-  }
-  return res.json();
+  return request<Note[]>('/notes');
 }
 
-/** Create a new note with the given title and content. */
-export async function createNote(data: { title: string; content: string }): Promise<Note> {
-  const res = await fetch(`${API_URL}/api/notes`, {
+export async function createNote(dto: CreateNoteDto): Promise<Note> {
+  return request<Note>('/notes', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    body: JSON.stringify(dto),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || err.message || res.statusText);
-  }
-  return res.json();
 }
 
-/** Delete a note by ID. */
 export async function deleteNote(id: string): Promise<void> {
-  const res = await fetch(`${API_URL}/api/notes/${id}`, { method: 'DELETE' });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || err.message || res.statusText);
-  }
-}
-
-/** Toggle the favorite status of a note by ID. */
-export async function toggleFavorite(id: string): Promise<Note> {
-  const res = await fetch(`${API_URL}/api/notes/${id}/favorite`, { method: 'PATCH' });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || err.message || res.statusText);
-  }
-  return res.json();
+  return request<void>(`/notes/${id}`, { method: 'DELETE' });
 }

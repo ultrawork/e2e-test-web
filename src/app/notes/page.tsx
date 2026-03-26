@@ -1,79 +1,88 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
 import { Note } from '@/types';
-import {
-  getNotes,
-  createNote,
-  deleteNote as apiDeleteNote,
-  toggleFavorite as apiToggleFavorite,
-} from '@/lib/api';
+import { createNote, deleteNote, getNotes } from '@/lib/api';
 
 export default function NotesPage(): React.ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [operationError, setOperationError] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setLoadError('Токен не найден. Сохраните токен в localStorage под ключом "token".');
+      setIsLoading(false);
+      return;
+    }
     getNotes()
-      .then((data) => setNotes(data))
-      .catch((err) => setError(err.message))
+      .then(setNotes)
+      .catch((e: Error) => setLoadError(e.message))
       .finally(() => setIsLoading(false));
   }, []);
 
-  const filteredNotes = notes.filter((n) =>
-    n.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredNotes = notes
+    .filter((n) => !showFavoritesOnly || favorites.has(n.id))
+    .filter((n) => n.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
   async function addNote(): Promise<void> {
-    const text = input.trim();
-    if (!text) return;
+    const title = input.trim();
+    if (!title) return;
+    setOperationError(null);
     try {
-      const newNote = await createNote({ title: text, content: text });
-      setNotes((prev) => [...prev, newNote]);
+      const created = await createNote({ title, content: '' });
+      setNotes((prev) => [...prev, created]);
       setInput('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create note');
+    } catch (e) {
+      setOperationError((e as Error).message);
     }
   }
 
-  async function deleteNote(id: string): Promise<void> {
+  async function handleDelete(id: string): Promise<void> {
+    setOperationError(null);
     try {
-      await apiDeleteNote(id);
+      await deleteNote(id);
       setNotes((prev) => prev.filter((n) => n.id !== id));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete note');
+    } catch (e) {
+      setOperationError((e as Error).message);
     }
   }
 
-  async function toggleFavorite(id: string): Promise<void> {
-    try {
-      const updated = await apiToggleFavorite(id);
-      setNotes((prev) => prev.map((n) => (n.id === id ? updated : n)));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to toggle favorite');
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
-        <p data-testid="loading">Loading...</p>
-      </main>
-    );
+  function toggleFavorite(id: string): void {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   }
 
   return (
     <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
       <h1>Notes</h1>
 
-      {error && (
-        <p role="alert" style={{ color: 'red', marginBottom: '1rem' }}>
-          {error}
+      {isLoading && <p>Загрузка...</p>}
+
+      {loadError && (
+        <p role="alert" style={{ color: 'red' }}>
+          {loadError}
+        </p>
+      )}
+
+      {operationError && (
+        <p role="alert" style={{ color: 'red' }}>
+          {operationError}
         </p>
       )}
 
@@ -84,7 +93,16 @@ export default function NotesPage(): React.ReactElement {
         }}
         style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}
       >
-        <label htmlFor="new-note" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+        <label
+          htmlFor="new-note"
+          style={{
+            position: 'absolute',
+            width: 1,
+            height: 1,
+            overflow: 'hidden',
+            clip: 'rect(0,0,0,0)',
+          }}
+        >
           New note
         </label>
         <input
@@ -93,16 +111,27 @@ export default function NotesPage(): React.ReactElement {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Enter a note"
+          disabled={isLoading}
           style={{ flex: 1, padding: '0.5rem' }}
         />
-        <button type="submit" style={{ padding: '0.5rem 1rem' }}>
+        <button type="submit" disabled={isLoading} style={{ padding: '0.5rem 1rem' }}>
           Add
         </button>
       </form>
 
       <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
-      <NotesCounter totalCount={notes.length} filteredCount={searchQuery ? filteredNotes.length : undefined} />
+      <NotesCounter
+        totalCount={notes.length}
+        filteredCount={searchQuery ? filteredNotes.length : undefined}
+      />
+
+      <button
+        onClick={() => setShowFavoritesOnly((prev) => !prev)}
+        style={{ marginBottom: '1rem', padding: '0.25rem 0.75rem' }}
+      >
+        {showFavoritesOnly ? '★ Только избранные' : '☆ Только избранные'}
+      </button>
 
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {filteredNotes.map((note) => (
@@ -117,17 +146,16 @@ export default function NotesPage(): React.ReactElement {
             }}
           >
             <span>{note.title}</span>
-            <div style={{ display: 'flex', gap: '0.25rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 onClick={() => toggleFavorite(note.id)}
-                data-testid={`favorite-button-${note.id}`}
                 aria-label={`Toggle favorite: ${note.title}`}
                 style={{ padding: '0.25rem 0.5rem' }}
               >
-                {note.isFavorited ? '★' : '☆'}
+                {favorites.has(note.id) ? '★' : '☆'}
               </button>
               <button
-                onClick={() => deleteNote(note.id)}
+                onClick={() => handleDelete(note.id)}
                 aria-label={`Delete note: ${note.title}`}
                 style={{ padding: '0.25rem 0.5rem' }}
               >
