@@ -109,7 +109,7 @@ test.describe('Notes API Integration', () => {
     await page.goto('/notes');
 
     // Should show network error
-    const alert = page.getByRole('alert');
+    const alert = page.locator('p[role="alert"]');
     await expect(alert).toBeVisible({ timeout: 10000 });
     await expect(alert).toContainText(/[Сс]етевая ошибка|подключение/i);
   });
