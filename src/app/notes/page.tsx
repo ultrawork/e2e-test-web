@@ -37,6 +37,7 @@ export default function NotesPage(): React.ReactElement {
 
   /* SC-006: client-side search filters by note.title */
   /* SC-007: clearing search resets filteredNotes to show all */
+  /* SC-008: when search yields no matches, filteredNotes is empty → counter shows "Найдено: 0 из N" */
   const filteredNotes = notes.filter((n) =>
     n.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
