@@ -60,6 +60,7 @@ export default function NotesPage(): React.ReactElement {
     }
   }
 
+  /** Toggle isFavorited via PATCH /api/notes/:id/favorite */
   async function handleToggleFavorite(id: string): Promise<void> {
     try {
       const updated = await api.toggleFavorite(id);
