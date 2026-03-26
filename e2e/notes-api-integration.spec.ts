@@ -93,9 +93,9 @@ test.describe('Notes API Integration', () => {
     await page.goto('/notes');
 
     // Should show authorization error
-    const alert = page.getByRole('alert');
+    const alert = page.locator('p[role="alert"]');
     await expect(alert).toBeVisible({ timeout: 10000 });
-    await expect(alert).toContainText(/авторизац|token/i);
+    await expect(alert).toContainText(/Необходима авторизация|Сохраните токен/i);
   });
 
   test('SC-004: Show network error when API is unreachable', async ({ page }) => {
