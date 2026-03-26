@@ -10,10 +10,9 @@ export default function NotesPage(): React.ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  /* SC-002 / SC-011: load notes list from API on mount */
   const loadNotes = useCallback(async () => {
     setLoading(true);
     try {
@@ -27,24 +26,19 @@ export default function NotesPage(): React.ReactElement {
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
     const token = localStorage.getItem('token');
     if (!token) {
+      setLoading(false);
       setError('Необходима авторизация');
       return;
     }
     loadNotes();
   }, [loadNotes]);
 
-  /* SC-006: client-side search filters notes by title (rebuild trigger) */
-  /* SC-007: clearing search resets filteredNotes to show all – rebuild trigger v2 */
-  /* SC-008: when search yields no matches, filteredNotes is empty → counter shows "Найдено: 0 из N" – rebuild trigger v2 */
-  /* SC-009: search is case-insensitive — toLowerCase on both sides – rebuild trigger v2 */
   const filteredNotes = notes.filter((n) =>
     n.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  /* SC-003: create note via POST /api/notes */
   async function addNote(): Promise<void> {
     const title = input.trim();
     if (!title) return;
@@ -57,7 +51,6 @@ export default function NotesPage(): React.ReactElement {
     }
   }
 
-  /** Remove note via DELETE /api/notes/:id – SC-013, SC-004 – v3 rebuild */
   async function deleteNote(id: string): Promise<void> {
     try {
       await api.deleteNote(id);
@@ -67,7 +60,6 @@ export default function NotesPage(): React.ReactElement {
     }
   }
 
-  /** Toggle isFavorited via PATCH /api/notes/:id/favorite – SC-005/SC-014 – v2 rebuild */
   async function handleToggleFavorite(id: string): Promise<void> {
     try {
       const updated = await api.toggleFavorite(id);
@@ -77,7 +69,6 @@ export default function NotesPage(): React.ReactElement {
     }
   }
 
-  /* auth guard – SC-001 / SC-002 / SC-010 / SC-011 */
   if (error === 'Необходима авторизация') {
     return (
       <main data-testid="auth-guard" style={{ padding: '2rem', fontFamily: 'system-ui' }}>
