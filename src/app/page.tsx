@@ -7,7 +7,7 @@ export default function Home(): React.ReactElement {
       <p>Welcome to the Notes App. Login or register to get started.</p>
       <nav style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
         <Link href="/notes">Go to Notes</Link>
-        <Link href="/login">Войти</Link>
+        <Link href="/login">Log in</Link>
       </nav>
     </main>
   );

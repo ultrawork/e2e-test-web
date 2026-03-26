@@ -14,19 +14,21 @@ export default function NotesPage(): React.ReactElement {
   const [titleInput, setTitleInput] = useState('');
   const [contentInput, setContentInput] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const [isMutating, setIsMutating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [hasToken, setHasToken] = useState(false);
 
   const loadNotes = useCallback(async () => {
     setIsLoading(true);
-    setError(null);
+    setLoadError(null);
     try {
       const data = await getNotes();
       setNotes(data);
     } catch {
-      setError('Ошибка загрузки заметок. Попробуйте позже.');
+      setLoadError('Failed to load notes. Please try again later.');
     } finally {
       setIsLoading(false);
     }
@@ -47,8 +49,8 @@ export default function NotesPage(): React.ReactElement {
     return (
       <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
         <h1>Notes</h1>
-        <p>Необходима авторизация</p>
-        <Link href="/login">Войти</Link>
+        <p>Authorization required</p>
+        <Link href="/login">Log in</Link>
       </main>
     );
   }
@@ -57,17 +59,17 @@ export default function NotesPage(): React.ReactElement {
     return (
       <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
         <h1>Notes</h1>
-        <p>Загрузка...</p>
+        <p>Loading...</p>
       </main>
     );
   }
 
-  if (error) {
+  if (loadError) {
     return (
       <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
         <h1>Notes</h1>
-        <p role="alert" style={{ color: 'red' }}>{error}</p>
-        <button onClick={loadNotes}>Обновить</button>
+        <p role="alert" style={{ color: 'red' }}>{loadError}</p>
+        <button onClick={loadNotes}>Refresh</button>
       </main>
     );
   }
@@ -76,35 +78,49 @@ export default function NotesPage(): React.ReactElement {
     .filter((n) => (showFavoritesOnly ? n.isFavorited : true))
     .filter((n) => n.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
+  function showMutationError(message: string): void {
+    setMutationError(message);
+    setTimeout(() => setMutationError(null), 5000);
+  }
+
   async function addNote(): Promise<void> {
     const title = titleInput.trim();
     const content = contentInput.trim();
     if (!title) return;
+    setIsMutating(true);
     try {
       const newNote = await createNote(title, content);
       setNotes((prev) => [...prev, newNote]);
       setTitleInput('');
       setContentInput('');
     } catch {
-      setError('Ошибка создания заметки.');
+      showMutationError('Failed to create note.');
+    } finally {
+      setIsMutating(false);
     }
   }
 
   async function handleDeleteNote(id: string): Promise<void> {
+    setIsMutating(true);
     try {
       await deleteNote(id);
       setNotes((prev) => prev.filter((n) => n.id !== id));
     } catch {
-      setError('Ошибка удаления заметки.');
+      showMutationError('Failed to delete note.');
+    } finally {
+      setIsMutating(false);
     }
   }
 
   async function handleToggleFavorite(id: string): Promise<void> {
+    setIsMutating(true);
     try {
       const updated = await toggleFavorite(id);
       setNotes((prev) => prev.map((n) => (n.id === id ? updated : n)));
     } catch {
-      setError('Ошибка обновления заметки.');
+      showMutationError('Failed to update note.');
+    } finally {
+      setIsMutating(false);
     }
   }
 
@@ -117,8 +133,12 @@ export default function NotesPage(): React.ReactElement {
     <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>Notes</h1>
-        <button onClick={handleLogout}>Выйти</button>
+        <button onClick={handleLogout}>Log out</button>
       </div>
+
+      {mutationError && (
+        <p role="alert" style={{ color: 'red', marginBottom: '1rem' }}>{mutationError}</p>
+      )}
 
       <form
         onSubmit={(e) => {
@@ -145,10 +165,10 @@ export default function NotesPage(): React.ReactElement {
           id="note-content"
           value={contentInput}
           onChange={(e) => setContentInput(e.target.value)}
-          placeholder="Содержание заметки"
+          placeholder="Note content"
           style={{ padding: '0.5rem' }}
         />
-        <button type="submit" style={{ padding: '0.5rem 1rem', alignSelf: 'flex-start' }}>
+        <button type="submit" disabled={isMutating} style={{ padding: '0.5rem 1rem', alignSelf: 'flex-start' }}>
           Add
         </button>
       </form>
@@ -161,7 +181,7 @@ export default function NotesPage(): React.ReactElement {
           aria-pressed={showFavoritesOnly}
           style={{ padding: '0.25rem 0.5rem' }}
         >
-          Только избранные
+          Favorites only
         </button>
       </div>
 
@@ -185,6 +205,7 @@ export default function NotesPage(): React.ReactElement {
                 onClick={() => handleToggleFavorite(note.id)}
                 data-testid={`favorite-button-${note.id}`}
                 aria-label="Toggle favorite"
+                disabled={isMutating}
                 style={{ padding: '0.25rem 0.5rem' }}
               >
                 {note.isFavorited ? '★' : '☆'}
@@ -192,6 +213,7 @@ export default function NotesPage(): React.ReactElement {
               <button
                 onClick={() => handleDeleteNote(note.id)}
                 aria-label={`Delete note: ${note.title}`}
+                disabled={isMutating}
                 style={{ padding: '0.25rem 0.5rem' }}
               >
                 Delete

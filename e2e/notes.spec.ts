@@ -27,7 +27,7 @@ test.describe('Notes App — Home Page', () => {
     await expect(page.getByRole('heading', { name: 'Notes App' })).toBeVisible();
     await expect(page.getByText('Welcome to the Notes App. Login or register to get started.')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Go to Notes' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Войти' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Log in' })).toBeVisible();
   });
 
   test('SC-002: Navigate from home to /notes via link', async ({ page }) => {
@@ -41,8 +41,8 @@ test.describe('Notes App — Auth Wall (без токена)', () => {
   test('SC-003: Without token shows auth wall, no form', async ({ page }) => {
     await page.goto('/notes');
 
-    await expect(page.getByText('Необходима авторизация')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Войти' })).toBeVisible();
+    await expect(page.getByText('Authorization required')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Log in' })).toBeVisible();
     await expect(page.getByPlaceholder('Enter a note')).not.toBeVisible();
     await expect(page.getByRole('button', { name: 'Add' })).not.toBeVisible();
   });
@@ -62,7 +62,7 @@ test.describe('Notes App — Mocked API (с токеном)', () => {
     await expect(page.getByRole('heading', { name: 'Notes' })).toBeVisible();
     await expect(page.getByPlaceholder('Enter a note')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Add' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Выйти' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Log out' })).toBeVisible();
     await expect(page.getByText('Всего заметок: 0')).toBeVisible();
   });
 
@@ -294,7 +294,7 @@ test.describe('Notes App — Mocked API (с токеном)', () => {
     await expect(page.getByText('Обычная')).toBeVisible();
     await expect(page.getByText('Избранная')).toBeVisible();
 
-    await page.getByRole('button', { name: 'Только избранные' }).click();
+    await page.getByRole('button', { name: 'Favorites only' }).click();
     await expect(page.getByText('Обычная')).not.toBeVisible();
     await expect(page.getByText('Избранная')).toBeVisible();
     await expect(page.getByText('Найдено: 1 из 2')).toBeVisible();
@@ -310,8 +310,8 @@ test.describe('Notes App — Mocked API (с токеном)', () => {
     });
 
     await page.goto('/notes');
-    await expect(page.getByText('Ошибка загрузки заметок. Попробуйте позже.')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Обновить' })).toBeVisible();
+    await expect(page.getByText('Failed to load notes. Please try again later.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Refresh' })).toBeVisible();
   });
 
   test('SC-016: Network error shows error state', async ({ page }) => {
@@ -324,18 +324,18 @@ test.describe('Notes App — Mocked API (с токеном)', () => {
     });
 
     await page.goto('/notes');
-    await expect(page.getByText('Ошибка загрузки заметок. Попробуйте позже.')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Обновить' })).toBeVisible();
+    await expect(page.getByText('Failed to load notes. Please try again later.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Refresh' })).toBeVisible();
   });
 });
 
 test.describe('Notes App — Login Page', () => {
   test('SC-017: Login page renders form', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.getByRole('heading', { name: 'Вход' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
     await expect(page.locator('#email')).toBeVisible();
     await expect(page.locator('#password')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Войти' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Log in' })).toBeVisible();
   });
 
   test('SC-018: Login error shows alert', async ({ page }) => {
@@ -346,9 +346,9 @@ test.describe('Notes App — Login Page', () => {
     await page.goto('/login');
     await page.locator('#email').fill('test@test.com');
     await page.locator('#password').fill('wrong');
-    await page.getByRole('button', { name: 'Войти' }).click();
+    await page.getByRole('button', { name: 'Log in' }).click();
 
-    await expect(page.locator('p[role="alert"]')).toContainText('Неверные учётные данные');
+    await expect(page.locator('p[role="alert"]')).toContainText('Invalid credentials');
   });
 
   test('SC-019: Logout clears token and redirects to login', async ({ page }) => {
@@ -361,9 +361,9 @@ test.describe('Notes App — Login Page', () => {
     });
 
     await page.goto('/notes');
-    await expect(page.getByRole('button', { name: 'Выйти' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Log out' })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Выйти' }).click();
+    await page.getByRole('button', { name: 'Log out' }).click();
     await expect(page).toHaveURL(/\/login/);
   });
 });

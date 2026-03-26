@@ -18,7 +18,7 @@ export function clearToken(): void {
 async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(options.body ? { 'Content-Type': 'application/json' } : {}),
     ...((options.headers as Record<string, string>) || {}),
   };
   if (token) {
@@ -83,7 +83,7 @@ export async function login(email: string, password: string): Promise<LoginRespo
   });
 
   if (!response.ok) {
-    throw new Error('Неверные учётные данные');
+    throw new Error('Invalid credentials');
   }
 
   return response.json();

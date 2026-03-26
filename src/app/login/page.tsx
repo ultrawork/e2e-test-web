@@ -28,7 +28,7 @@ export default function LoginPage(): React.ReactElement {
       localStorage.setItem('token', data.token);
       router.push('/notes');
     } catch {
-      setError('Неверные учётные данные');
+      setError('Invalid credentials');
     } finally {
       setIsSubmitting(false);
     }
@@ -36,7 +36,7 @@ export default function LoginPage(): React.ReactElement {
 
   return (
     <main style={{ padding: '2rem', fontFamily: 'system-ui', maxWidth: '400px', margin: '0 auto' }}>
-      <h1>Вход</h1>
+      <h1>Login</h1>
 
       {error && (
         <p role="alert" style={{ color: 'red', marginBottom: '1rem' }}>
@@ -58,7 +58,7 @@ export default function LoginPage(): React.ReactElement {
         </div>
 
         <div>
-          <label htmlFor="password">Пароль</label>
+          <label htmlFor="password">Password</label>
           <input
             id="password"
             type="password"
@@ -70,7 +70,7 @@ export default function LoginPage(): React.ReactElement {
         </div>
 
         <button type="submit" disabled={isSubmitting} style={{ padding: '0.5rem 1rem' }}>
-          {isSubmitting ? 'Вход...' : 'Войти'}
+          {isSubmitting ? 'Logging in...' : 'Log in'}
         </button>
       </form>
     </main>
