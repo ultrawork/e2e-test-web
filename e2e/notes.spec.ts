@@ -18,20 +18,8 @@ test.describe('Notes App', () => {
     mockNotes = [];
     nextId = 1;
 
-    await page.route('**/api/notes/*/favorite', async (route) => {
-      if (route.request().method() !== 'PATCH') {
-        await route.fallback();
-        return;
-      }
-      const url = route.request().url();
-      const id = url.split('/api/notes/')[1].split('/favorite')[0];
-      const note = mockNotes.find((n) => n.id === id);
-      if (!note) {
-        await route.fulfill({ status: 404, json: { error: 'Not found' } });
-        return;
-      }
-      note.isFavorited = !note.isFavorited;
-      await route.fulfill({ status: 200, json: note });
+    await page.addInitScript(() => {
+      localStorage.setItem('token', 'test-token');
     });
 
     await page.route('**/api/notes/*', async (route) => {

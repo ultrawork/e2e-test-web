@@ -150,6 +150,7 @@ export default function NotesPage(): React.ReactElement {
               <button
                 onClick={() => toggleFavorite(note.id)}
                 aria-label={`Toggle favorite: ${note.title}`}
+                data-testid={`favorite-button-${note.id}`}
                 style={{ padding: '0.25rem 0.5rem' }}
               >
                 {favorites.has(note.id) ? '★' : '☆'}
