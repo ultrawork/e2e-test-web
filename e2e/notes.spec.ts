@@ -205,17 +205,24 @@ test.describe('Notes App', () => {
       await page.goto('/notes');
       await expect(page.getByRole('heading', { name: 'Notes' })).toBeVisible();
 
-      // Intercept API call to return 401
+      // Intercept only POST API calls to return 401
       await page.route('**/api/notes', (route) => {
-        route.fulfill({ status: 401, body: JSON.stringify({ error: 'Unauthorized' }) });
+        if (route.request().method() === 'POST') {
+          route.fulfill({ status: 401, body: JSON.stringify({ error: 'Unauthorized' }) });
+        } else {
+          route.continue();
+        }
       });
 
       // Trigger an API call by adding a note
       await page.getByLabel('New note').fill('Test note');
-      await page.getByRole('button', { name: 'Add' }).click();
+      await Promise.all([
+        page.waitForURL(/\/login/, { timeout: 15000 }),
+        page.getByRole('button', { name: 'Add' }).click(),
+      ]);
 
-      // Should redirect to /login
-      await expect(page).toHaveURL(/\/login/);
+      // Should be on /login
+      await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
 
       // Token should be cleared
       const tokenValue = await page.evaluate(() => localStorage.getItem('auth_token'));
