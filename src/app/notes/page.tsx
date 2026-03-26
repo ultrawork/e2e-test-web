@@ -57,7 +57,7 @@ export default function NotesPage(): React.ReactElement {
     }
   }
 
-  /** Remove note via DELETE /api/notes/:id – SC-013, SC-004 – v2 */
+  /** Remove note via DELETE /api/notes/:id – SC-013, SC-004 – v3 rebuild */
   async function deleteNote(id: string): Promise<void> {
     try {
       await api.deleteNote(id);
