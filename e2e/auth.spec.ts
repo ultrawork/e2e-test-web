@@ -16,7 +16,7 @@ test.describe('Auth - Login Page', () => {
     await expect(page.getByRole('button', { name: 'Войти (dev)' })).toBeEnabled();
 
     // No error messages shown initially
-    await expect(page.getByRole('alert')).not.toBeVisible();
+    await expect(page.locator('p[role="alert"]')).not.toBeVisible();
   });
 
   test('SC-002: Successful login via dev-token redirects to /notes', async ({ page }) => {
