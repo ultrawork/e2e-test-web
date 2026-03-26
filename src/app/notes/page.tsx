@@ -70,7 +70,7 @@ export default function NotesPage(): React.ReactElement {
     }
   }
 
-  /* auth guard – SC-010 */
+  /* auth guard – SC-010 / SC-011 */
   if (error === 'Необходима авторизация') {
     return (
       <main data-testid="auth-guard" style={{ padding: '2rem', fontFamily: 'system-ui' }}>
