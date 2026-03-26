@@ -173,7 +173,9 @@ test.describe('Notes API v20', () => {
 
     await page.goto('/notes');
 
-    await expect(page.getByRole('alert')).toHaveText('Необходима авторизация');
+    const alertMsg = page.locator('main p[role="alert"]');
+    await expect(alertMsg).toBeVisible();
+    await expect(alertMsg).toHaveText('Необходима авторизация');
     await expect(page.getByPlaceholder('Enter a note')).not.toBeVisible();
   });
 });
