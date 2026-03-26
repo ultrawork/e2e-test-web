@@ -94,6 +94,7 @@ export default function NotesPage(): React.ReactElement {
       {error && <p role="alert">{error}</p>}
 
       <form
+        data-testid="add-note-form"
         onSubmit={(e) => {
           e.preventDefault();
           addNote();
