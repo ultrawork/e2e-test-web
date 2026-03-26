@@ -81,7 +81,7 @@ export default function NotesPage(): React.ReactElement {
   if (error === 'Необходима авторизация') {
     return (
       <main data-testid="auth-guard" style={{ padding: '2rem', fontFamily: 'system-ui' }}>
-        <h1>Notes</h1>
+        <h1 data-testid="auth-guard-heading">Notes</h1>
         <p role="alert" data-testid="auth-error">Необходима авторизация</p>
       </main>
     );
