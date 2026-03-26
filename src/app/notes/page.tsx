@@ -121,7 +121,7 @@ export default function NotesPage(): React.ReactElement {
 
       <NotesCounter totalCount={notes.length} filteredCount={searchQuery ? filteredNotes.length : undefined} />
 
-      <ul style={{ listStyle: 'none', padding: 0 }}>
+      <ul data-testid="notes-list" style={{ listStyle: 'none', padding: 0 }}>
         {filteredNotes.map((note) => (
           <li
             key={note.id}

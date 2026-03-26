@@ -92,14 +92,19 @@ test.describe('Notes API v20', () => {
   test('SC-004: Удаление заметки через API', async ({ page }) => {
     const note = mockNote({ id: '5', title: 'Удалить меня' });
     let deleteCalled = false;
-    await page.route(API_URL, (route) => {
-      if (route.request().method() === 'GET') {
-        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([note]) });
+
+    await page.route((url) => url.pathname.includes('/api/notes'), (route) => {
+      const method = route.request().method();
+      const pathname = new URL(route.request().url()).pathname;
+
+      if (method === 'GET' && pathname.endsWith('/api/notes')) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([note]),
+        });
       }
-      return route.continue();
-    });
-    await page.route('**/api/notes/5', (route) => {
-      if (route.request().method() === 'DELETE') {
+      if (method === 'DELETE' && pathname.endsWith('/api/notes/5')) {
         deleteCalled = true;
         return route.fulfill({ status: 204 });
       }
