@@ -1,37 +1,97 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
-
-interface Note {
-  id: number;
-  text: string;
-}
+import { api } from '@/lib/api';
+import { Note } from '@/types';
 
 export default function NotesPage(): React.ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadNotes = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.getNotes();
+      setNotes(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Ошибка загрузки');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('Необходима авторизация');
+      return;
+    }
+    loadNotes();
+  }, [loadNotes]);
 
   const filteredNotes = notes.filter((n) =>
-    n.text.toLowerCase().includes(searchQuery.toLowerCase())
+    n.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  function addNote(): void {
-    const text = input.trim();
-    if (!text) return;
-    setNotes((prev) => [...prev, { id: Date.now(), text }]);
-    setInput('');
+  async function addNote(): Promise<void> {
+    const title = input.trim();
+    if (!title) return;
+    try {
+      const note = await api.createNote({ title, content: '' });
+      setNotes((prev) => [...prev, note]);
+      setInput('');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Ошибка создания');
+    }
   }
 
-  function deleteNote(id: number): void {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
+  async function deleteNote(id: string): Promise<void> {
+    try {
+      await api.deleteNote(id);
+      setNotes((prev) => prev.filter((n) => n.id !== id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Ошибка удаления');
+    }
+  }
+
+  async function handleToggleFavorite(id: string): Promise<void> {
+    try {
+      const updated = await api.toggleFavorite(id);
+      setNotes((prev) => prev.map((n) => (n.id === id ? updated : n)));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Ошибка обновления');
+    }
+  }
+
+  if (error === 'Необходима авторизация') {
+    return (
+      <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+        <h1>Notes</h1>
+        <p role="alert">Необходима авторизация</p>
+      </main>
+    );
+  }
+
+  if (loading) {
+    return (
+      <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+        <h1>Notes</h1>
+        <p>Загрузка...</p>
+      </main>
+    );
   }
 
   return (
     <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
       <h1>Notes</h1>
+
+      {error && <p role="alert">{error}</p>}
 
       <form
         onSubmit={(e) => {
@@ -72,14 +132,23 @@ export default function NotesPage(): React.ReactElement {
               borderBottom: '1px solid #eee',
             }}
           >
-            <span>{note.text}</span>
-            <button
-              onClick={() => deleteNote(note.id)}
-              aria-label={`Delete note: ${note.text}`}
-              style={{ padding: '0.25rem 0.5rem' }}
-            >
-              Delete
-            </button>
+            <span>{note.title}</span>
+            <div style={{ display: 'flex', gap: '0.25rem' }}>
+              <button
+                onClick={() => handleToggleFavorite(note.id)}
+                aria-label={note.isFavorited ? `Убрать из избранного: ${note.title}` : `Добавить в избранное: ${note.title}`}
+                style={{ padding: '0.25rem 0.5rem', cursor: 'pointer', background: 'none', border: 'none', fontSize: '1.2rem' }}
+              >
+                {note.isFavorited ? '★' : '☆'}
+              </button>
+              <button
+                onClick={() => deleteNote(note.id)}
+                aria-label={`Delete note: ${note.title}`}
+                style={{ padding: '0.25rem 0.5rem' }}
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>
