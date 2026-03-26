@@ -1,13 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 import { setToken } from '@/lib/api';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 export default function LoginPage(): React.ReactElement {
-  const router = useRouter();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -24,7 +22,7 @@ export default function LoginPage(): React.ReactElement {
       }
       const data = await response.json();
       setToken(data.token);
-      router.push('/notes');
+      window.location.href = '/notes';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Неизвестная ошибка');
     } finally {
