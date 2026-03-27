@@ -54,6 +54,7 @@ test.describe('Notes App — Auth Integration', () => {
     await page.evaluate((t) => localStorage.setItem('token', t), token);
     await page.goto('/login');
 
+    await page.waitForURL(/\/notes/, { timeout: 15000 });
     await expect(page).toHaveURL(/\/notes/);
   });
 
