@@ -7,11 +7,19 @@ export function getToken(): string | null {
   return localStorage.getItem('token');
 }
 
+export function setToken(token: string): void {
+  localStorage.setItem('token', token);
+}
+
 export function clearToken(): void {
   localStorage.removeItem('token');
 }
 
-export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function apiRequest<T>(
+  path: string,
+  options: RequestInit = {},
+  { skipAuthRedirect = false } = {},
+): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -27,7 +35,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
     headers,
   });
 
-  if (response.status === 401) {
+  if (response.status === 401 && !skipAuthRedirect) {
     clearToken();
     window.location.href = '/login';
     throw new Error('Unauthorized');
@@ -37,6 +45,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
     throw new Error(`API error: ${response.status}`);
   }
 
+  if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
 }
 
@@ -58,8 +67,12 @@ export async function deleteNote(id: string): Promise<void> {
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
-  return apiRequest<LoginResponse>('/api/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-  });
+  return apiRequest<LoginResponse>(
+    '/api/auth/login',
+    {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    },
+    { skipAuthRedirect: true },
+  );
 }

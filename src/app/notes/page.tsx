@@ -54,8 +54,7 @@ export default function NotesPage(): React.ReactElement {
     }
   }
 
-  async function handleDeleteNote(id: string, text: string): Promise<void> {
-    void text;
+  async function handleDeleteNote(id: string): Promise<void> {
     try {
       await deleteNote(id);
       setNotes((prev) => prev.filter((n) => n.id !== id));
@@ -136,7 +135,7 @@ export default function NotesPage(): React.ReactElement {
           >
             <span>{note.text}</span>
             <button
-              onClick={() => handleDeleteNote(note.id, note.text)}
+              onClick={() => handleDeleteNote(note.id)}
               aria-label={`Delete note: ${note.text}`}
               style={{ padding: '0.25rem 0.5rem' }}
             >

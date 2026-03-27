@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getToken, login } from '@/lib/api';
+import { getToken, setToken, login } from '@/lib/api';
 
 export default function LoginPage(): React.ReactElement {
   const router = useRouter();
@@ -24,7 +24,7 @@ export default function LoginPage(): React.ReactElement {
 
     try {
       const data = await login(email, password);
-      localStorage.setItem('token', data.token);
+      setToken(data.token);
       router.push('/notes');
     } catch {
       setError('Неверные учётные данные');
