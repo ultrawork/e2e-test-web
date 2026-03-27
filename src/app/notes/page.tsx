@@ -1,42 +1,104 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
-
-interface Note {
-  id: number;
-  text: string;
-}
+import { getToken, clearToken, getNotes, createNote, deleteNote } from '@/lib/api';
+import { Note } from '@/types';
 
 export default function NotesPage(): React.ReactElement {
+  const router = useRouter();
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
+
+  const loadNotes = useCallback(async () => {
+    try {
+      const data = await getNotes();
+      setNotes(data);
+    } catch {
+      // 401 handled in apiRequest
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      setAuthorized(false);
+      setLoading(false);
+      return;
+    }
+    setAuthorized(true);
+    loadNotes();
+  }, [loadNotes]);
 
   const filteredNotes = notes.filter((n) =>
     n.text.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  function addNote(): void {
+  async function handleAddNote(): Promise<void> {
     const text = input.trim();
     if (!text) return;
-    setNotes((prev) => [...prev, { id: Date.now(), text }]);
-    setInput('');
+    try {
+      const note = await createNote(text);
+      setNotes((prev) => [...prev, note]);
+      setInput('');
+    } catch {
+      // 401 handled in apiRequest
+    }
   }
 
-  function deleteNote(id: number): void {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
+  async function handleDeleteNote(id: string, text: string): Promise<void> {
+    void text;
+    try {
+      await deleteNote(id);
+      setNotes((prev) => prev.filter((n) => n.id !== id));
+    } catch {
+      // 401 handled in apiRequest
+    }
+  }
+
+  function handleLogout(): void {
+    clearToken();
+    router.push('/login');
+  }
+
+  if (loading) {
+    return (
+      <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+        <p>Загрузка...</p>
+      </main>
+    );
+  }
+
+  if (!authorized) {
+    return (
+      <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+        <p>Необходима авторизация</p>
+        <Link href="/login">Войти</Link>
+      </main>
+    );
   }
 
   return (
     <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
-      <h1>Notes</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h1>Notes</h1>
+        <button onClick={handleLogout} style={{ padding: '0.5rem 1rem' }}>
+          Выйти
+        </button>
+      </div>
 
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          addNote();
+          handleAddNote();
         }}
         style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}
       >
@@ -74,7 +136,7 @@ export default function NotesPage(): React.ReactElement {
           >
             <span>{note.text}</span>
             <button
-              onClick={() => deleteNote(note.id)}
+              onClick={() => handleDeleteNote(note.id, note.text)}
               aria-label={`Delete note: ${note.text}`}
               style={{ padding: '0.25rem 0.5rem' }}
             >
