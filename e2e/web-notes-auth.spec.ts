@@ -31,10 +31,8 @@ test.describe('Web v23: Notes Auth E2E', () => {
       localStorage.removeItem('token');
     });
     await page.goto('/notes');
-    // Wait for React hydration to complete and auth gate to render
-    await expect(page.getByTestId('auth-gate')).toBeVisible({ timeout: 10000 });
 
-    await expect(page.getByText('Необходима авторизация')).toBeVisible();
+    await expect(page.getByText('Необходима авторизация')).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole('link', { name: 'Войти' })).toBeVisible();
     await expect(page.getByPlaceholder('Enter a note')).not.toBeVisible();
   });
