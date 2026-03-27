@@ -127,6 +127,8 @@ test.describe('Web v23: Notes Auth E2E', () => {
     });
     await page.goto('/notes');
 
+    // Wait for the full 401 flow: page load → apiFetch → 401 → removeToken → auth:unauthorized event → re-render
+    await expect(page.getByTestId('auth-gate')).toBeVisible({ timeout: 15000 });
     await expect(page.getByText('Необходима авторизация')).toBeVisible();
 
     const tokenAfter = await page.evaluate(() => localStorage.getItem('token'));
