@@ -26,7 +26,13 @@ async function setupAuthenticatedPage(
 
 test.describe('Web v23: Notes Auth E2E', () => {
   test('SC-01: без токена показывается требование авторизации', async ({ page }) => {
+    // Ensure no token is present (clean context)
+    await page.addInitScript(() => {
+      localStorage.removeItem('token');
+    });
     await page.goto('/notes');
+    // Wait for React hydration to complete and auth gate to render
+    await expect(page.getByTestId('auth-gate')).toBeVisible({ timeout: 10000 });
 
     await expect(page.getByText('Необходима авторизация')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Войти' })).toBeVisible();

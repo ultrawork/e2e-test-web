@@ -62,10 +62,10 @@ export default function NotesPage(): React.ReactElement {
 
   if (!isAuthenticated) {
     return (
-      <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+      <main style={{ padding: '2rem', fontFamily: 'system-ui' }} data-testid="auth-gate">
         <h1>Notes</h1>
-        <p>Необходима авторизация</p>
-        <Link href="/">Войти</Link>
+        <p data-testid="auth-required">Необходима авторизация</p>
+        <Link href="/" data-testid="auth-login-link">Войти</Link>
       </main>
     );
   }
