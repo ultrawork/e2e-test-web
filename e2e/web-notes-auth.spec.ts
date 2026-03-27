@@ -93,20 +93,28 @@ test.describe('Web v23: Notes Auth E2E', () => {
 
   test('SC-05: api.ts добавляет заголовок Authorization: Bearer <token>', async ({ page }) => {
     const token = 'bearer-check-token-v23';
-    let capturedAuthHeader: string | null = null;
 
     await page.route('**/api/notes', async (route) => {
-      capturedAuthHeader = route.request().headers()['authorization'] ?? null;
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
     });
 
     await page.addInitScript((t) => {
       localStorage.setItem('token', t);
     }, token);
+
+    // Set up request listener BEFORE navigation to reliably capture the API call
+    const requestPromise = page.waitForRequest((request) =>
+      request.url().includes('/api/notes'),
+    );
+
     await page.goto('/notes');
 
-    await expect(page.getByPlaceholder('Enter a note')).toBeVisible();
-    expect(capturedAuthHeader).toBe(`Bearer ${token}`);
+    // Wait for the API request triggered by useEffect in page.tsx
+    const request = await requestPromise;
+
+    // Verify api.ts added the Authorization header
+    const authHeader = request.headers()['authorization'];
+    expect(authHeader).toBe(`Bearer ${token}`);
   });
 
   test('SC-06: при 401 от API токен удаляется и показывается требование авторизации', async ({ page }) => {
