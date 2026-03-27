@@ -59,7 +59,7 @@ export async function getNotes(): Promise<Note[]> {
 export async function createNote(text: string): Promise<Note> {
   return apiRequest<Note>('/api/notes', {
     method: 'POST',
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ title: text, content: text }),
   });
 }
 

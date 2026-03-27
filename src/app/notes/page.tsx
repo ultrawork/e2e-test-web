@@ -44,7 +44,7 @@ export default function NotesPage(): React.ReactElement {
   }, [loadNotes]);
 
   const filteredNotes = notes.filter((n) =>
-    n.text.toLowerCase().includes(searchQuery.toLowerCase())
+    n.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   async function handleAddNote(): Promise<void> {
@@ -152,10 +152,10 @@ export default function NotesPage(): React.ReactElement {
               borderBottom: '1px solid #eee',
             }}
           >
-            <span>{note.text}</span>
+            <span>{note.title}</span>
             <button
               onClick={() => handleDeleteNote(note.id)}
-              aria-label={`Delete note: ${note.text}`}
+              aria-label={`Delete note: ${note.title}`}
               style={{ padding: '0.25rem 0.5rem' }}
             >
               Delete
