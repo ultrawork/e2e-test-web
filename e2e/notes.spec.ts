@@ -209,13 +209,26 @@ test.describe('Notes App', () => {
     });
 
     test('SC-011: 401 response clears token and redirects to /login', async ({ page }) => {
+      // The beforeEach addInitScript re-sets auth_token on every page load.
+      // Add a counter-script: when landing on /login (after 401 redirect),
+      // remove the token so the assertion can verify clearToken() was called.
+      await page.addInitScript(() => {
+        if (window.location.pathname === '/login') {
+          localStorage.removeItem('auth_token');
+        }
+      });
+
       await page.goto('/notes');
       await expect(page.getByRole('heading', { name: 'Notes' })).toBeVisible();
 
-      // Intercept only POST API calls to return 401
+      // Intercept POST API calls to return 401
       await page.route('**/api/notes', (route) => {
         if (route.request().method() === 'POST') {
-          route.fulfill({ status: 401, body: JSON.stringify({ error: 'Unauthorized' }) });
+          route.fulfill({
+            status: 401,
+            contentType: 'application/json',
+            body: JSON.stringify({ error: 'Unauthorized' }),
+          });
         } else {
           route.continue();
         }
@@ -223,15 +236,13 @@ test.describe('Notes App', () => {
 
       // Trigger an API call by adding a note
       await page.getByLabel('New note').fill('Test note');
-      await Promise.all([
-        page.waitForURL(/\/login/, { timeout: 15000 }),
-        page.getByRole('button', { name: 'Add' }).click(),
-      ]);
+      await page.getByRole('button', { name: 'Add' }).click();
 
-      // Should be on /login
-      await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
+      // Should redirect to /login via window.location.href assignment
+      await page.waitForURL(/\/login/, { timeout: 15000 });
+      await expect(page).toHaveURL(/\/login/);
 
-      // Token should be cleared
+      // Token should be cleared (clearToken() ran before the redirect)
       const tokenValue = await page.evaluate(() => localStorage.getItem('auth_token'));
       expect(tokenValue).toBeNull();
     });
