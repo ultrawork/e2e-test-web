@@ -1,6 +1,15 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Notes App', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/api/notes', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
+    });
+    await page.addInitScript(() => {
+      localStorage.setItem('token', 'e2e-test-token');
+    });
+  });
+
   test('SC-001: Home page displays heading, welcome text, and link', async ({ page }) => {
     await page.goto('/');
 

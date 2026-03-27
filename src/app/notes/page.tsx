@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
+import { getToken, fetchNotes as apiFetchNotes } from '@/lib/api';
 
 interface Note {
   id: number;
@@ -13,6 +15,31 @@ export default function NotesPage(): React.ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const token = getToken();
+    if (token) {
+      setIsAuthenticated(true);
+      apiFetchNotes()
+        .then((data) => setNotes(data))
+        .catch(() => {
+          /* API not available — start with empty state */
+        })
+        .finally(() => setIsLoading(false));
+    } else {
+      setIsAuthenticated(false);
+      setIsLoading(false);
+    }
+
+    const handleUnauthorized = () => {
+      setIsAuthenticated(false);
+      setIsLoading(false);
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, []);
 
   const filteredNotes = notes.filter((n) =>
     n.text.toLowerCase().includes(searchQuery.toLowerCase())
@@ -27,6 +54,20 @@ export default function NotesPage(): React.ReactElement {
 
   function deleteNote(id: number): void {
     setNotes((prev) => prev.filter((n) => n.id !== id));
+  }
+
+  if (isLoading) {
+    return <div />;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <main style={{ padding: '2rem', fontFamily: 'system-ui' }} data-testid="auth-gate">
+        <h1>Notes</h1>
+        <p data-testid="auth-required">Необходима авторизация</p>
+        <Link href="/" data-testid="auth-login-link">Войти</Link>
+      </main>
+    );
   }
 
   return (
