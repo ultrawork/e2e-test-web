@@ -83,7 +83,7 @@ export default function NotesPage(): React.ReactElement {
 
   if (loading) {
     return (
-      <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+      <main data-testid="notes-loading" style={{ padding: '2rem', fontFamily: 'system-ui' }}>
         <p>Загрузка...</p>
       </main>
     );
@@ -91,7 +91,7 @@ export default function NotesPage(): React.ReactElement {
 
   if (!authorized) {
     return (
-      <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+      <main data-testid="notes-auth-required" style={{ padding: '2rem', fontFamily: 'system-ui' }}>
         <p>Необходима авторизация</p>
         <Link href="/login">Войти</Link>
       </main>
@@ -99,7 +99,7 @@ export default function NotesPage(): React.ReactElement {
   }
 
   return (
-    <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+    <main data-testid="notes-page" style={{ padding: '2rem', fontFamily: 'system-ui' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h1>Notes</h1>
         <button onClick={handleLogout} style={{ padding: '0.5rem 1rem' }}>
