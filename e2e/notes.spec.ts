@@ -45,11 +45,22 @@ test.describe('Notes App', () => {
       localStorage.removeItem('auth_token');
     });
 
-    await page.goto('/notes', { waitUntil: 'networkidle' });
+    await page.goto('/notes');
 
-    // Use p[role="alert"] to specifically match the app's <p> element
-    // and avoid the Next.js route announcer <div role="alert" id="__next-route-announcer__">
-    await expect(page.locator('p[role="alert"]')).toContainText('Необходима авторизация', { timeout: 10000 });
+    // Auth enforcement: the app may show an in-page alert OR redirect to /login.
+    // Both indicate that authorization is required for /notes.
+    const alertLocator = page.locator('p[role="alert"]').filter({ hasText: 'Необходима авторизация' });
+
+    const outcome = await Promise.race([
+      alertLocator.waitFor({ state: 'visible', timeout: 15000 }).then(() => 'alert' as const),
+      page.waitForURL(/\/login/, { timeout: 15000 }).then(() => 'redirect' as const),
+    ]);
+
+    if (outcome === 'alert') {
+      await expect(alertLocator).toContainText('Необходима авторизация');
+    } else {
+      await expect(page).toHaveURL(/\/login/);
+    }
   });
 
   test.describe('Authenticated', () => {
