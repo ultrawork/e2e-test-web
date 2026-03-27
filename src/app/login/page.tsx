@@ -34,7 +34,7 @@ export default function LoginPage(): React.ReactElement {
   }
 
   return (
-    <main style={{ padding: '2rem', fontFamily: 'system-ui', maxWidth: '400px', margin: '0 auto' }}>
+    <main data-testid="login-page" style={{ padding: '2rem', fontFamily: 'system-ui', maxWidth: '400px', margin: '0 auto' }}>
       <h1>Вход</h1>
 
       {error && (
