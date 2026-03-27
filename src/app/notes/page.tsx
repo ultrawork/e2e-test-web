@@ -6,12 +6,13 @@ import SearchBar from '@/components/SearchBar';
 import { getToken, getNotes as fetchNotes, createNote, deleteNote as apiDeleteNote } from '@/lib/api';
 import type { Note } from '@/types';
 
-export default function NotesPage(): React.ReactElement {
+export default function NotesPage(): React.ReactElement | null {
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   const loadNotes = useCallback(async () => {
     setLoading(true);
@@ -30,9 +31,10 @@ export default function NotesPage(): React.ReactElement {
     const token = getToken();
     if (!token) {
       setError('Необходима авторизация');
+      setAuthChecked(true);
       return;
     }
-    loadNotes();
+    loadNotes().finally(() => setAuthChecked(true));
   }, [loadNotes]);
 
   const filteredNotes = notes.filter((n) =>
@@ -58,6 +60,10 @@ export default function NotesPage(): React.ReactElement {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка удаления заметки');
     }
+  }
+
+  if (!authChecked) {
+    return null;
   }
 
   if (error === 'Необходима авторизация') {
