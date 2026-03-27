@@ -4,7 +4,7 @@
 **Версия:** v23
 **Окружение:** Next.js 15.1.0, Playwright 1.52.0, Chromium headless
 **APP_PORT:** 3000 (Next.js dev)
-**API_PORT:** 4000 (backend v23, не требуется для текущих тестов)
+**API_PORT:** 4000 (backend v23, мокается через Playwright route interception)
 
 ---
 
@@ -12,12 +12,14 @@
 
 | Сценарий | Описание | Результат |
 |----------|----------|-----------|
-| SC-v23-01 | Без токена — страница /notes доступна | PASS |
-| SC-v23-02 | Интерфейс заметок: заголовок, форма, счётчик | PASS |
+| SC-v23-01 | Без токена — показ требования авторизации | PASS |
+| SC-v23-02 | С токеном — список, форма и счётчик отображаются | PASS |
 | SC-v23-03 | Создание заметки увеличивает счётчик | PASS |
 | SC-v23-04 | Удаление заметки уменьшает счётчик | PASS |
+| SC-v23-05 | api.ts добавляет Authorization: Bearer заголовок | PASS |
+| SC-v23-06 | api.ts корректно обрабатывает 401 (удаляет токен, показывает auth gate) | PASS |
 
-**Итого:** 4/4 PASS
+**Итого:** 6/6 PASS
 
 ---
 
@@ -41,11 +43,16 @@
 
 ## Конфигурационные изменения
 
-- `playwright.config.ts`: `baseURL` исправлен с `http://localhost:4000` на `http://localhost:3000` (Next.js, а не backend)
-- `.env.local`: создан с `NEXT_PUBLIC_API_URL=http://localhost:4000`
+- `playwright.config.ts`: `baseURL` = `http://localhost:3000` (Next.js)
+- `.env.local`: `NEXT_PUBLIC_API_URL=http://localhost:4000` (описан в README, в .gitignore)
+- `src/lib/api.ts`: создан — API-клиент с `Authorization: Bearer <token>` и обработкой 401
+- `src/app/notes/page.tsx`: добавлен auth gate (проверка токена в localStorage)
 
 ## Примечания
 
-- Auth gate (`src/lib/api.ts`, проверка токена) на текущий момент не реализован в страницах — `/notes` доступна без авторизации.
-- SC-v23-01 подтверждает доступность страницы без токена.
-- Существующие тесты (SC-001..SC-009) продолжают проходить после исправления `baseURL`.
+- Auth gate проверяет наличие токена в localStorage при монтировании страницы.
+- При отсутствии токена отображается «Необходима авторизация» со ссылкой «Войти».
+- При наличии токена выполняется запрос `fetchNotes()` с заголовком `Authorization: Bearer <token>`.
+- При получении 401 от API токен удаляется из localStorage, отображается auth gate.
+- E2E-тесты используют Playwright route interception для мокирования API-ответов.
+- Существующие тесты (SC-001..SC-009) обновлены: добавлен setup токена через `addInitScript`.

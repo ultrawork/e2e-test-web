@@ -21,6 +21,26 @@ Cross-platform notes application — web frontend built with Next.js 15 + React 
    npm install && npm run dev
    ```
 
+### Настройка токена авторизации
+
+Страница `/notes` требует авторизации. Токен хранится в `localStorage` под ключом `token`.
+
+**Для ручного тестирования в браузере:**
+1. Откройте DevTools (F12) → вкладка Console.
+2. Выполните:
+   ```javascript
+   localStorage.setItem('token', 'ваш-токен')
+   ```
+3. Перезагрузите страницу `/notes`.
+
+**Для получения dev-token (при наличии backend):**
+```bash
+curl -X POST http://localhost:4000/api/auth/dev-token
+```
+Скопируйте значение `token` из ответа и установите в localStorage.
+
+**В E2E-тестах:** токен устанавливается автоматически через `addInitScript`. API-ответы мокаются через Playwright route interception, поэтому тесты работают без запущенного backend.
+
 ### Запуск тестов
 
 ```bash
