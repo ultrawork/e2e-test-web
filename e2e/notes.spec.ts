@@ -52,10 +52,9 @@ test.describe('Notes App — Auth Integration', () => {
 
     await page.goto('/login');
     await page.evaluate((t) => localStorage.setItem('token', t), token);
-    await page.goto('/login');
+    await page.goto('/login', { waitUntil: 'commit' });
 
-    await page.waitForURL(/\/notes/, { timeout: 15000 });
-    await expect(page).toHaveURL(/\/notes/);
+    await expect(page).toHaveURL(/\/notes/, { timeout: 15000 });
   });
 
   test('SC-004: Logout button clears token and redirects to /login', async ({ page }) => {
