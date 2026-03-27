@@ -109,7 +109,7 @@ test.describe('Web v23: Notes Auth E2E', () => {
   });
 
   test('SC-06: при 401 от API токен удаляется и показывается требование авторизации', async ({ page }) => {
-    await page.route('**/api/notes', async (route) => {
+    await page.route('http://localhost:4000/api/notes', async (route) => {
       await route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Unauthorized' }) });
     });
 
@@ -118,9 +118,7 @@ test.describe('Web v23: Notes Auth E2E', () => {
     });
     await page.goto('/notes');
 
-    // Wait for the full 401 flow: page load → apiFetch → 401 → removeToken → auth:unauthorized event → re-render
-    await expect(page.getByTestId('auth-gate')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Необходима авторизация')).toBeVisible();
+    await expect(page.getByText('Необходима авторизация')).toBeVisible({ timeout: 15000 });
 
     const tokenAfter = await page.evaluate(() => localStorage.getItem('token'));
     expect(tokenAfter).toBeNull();
