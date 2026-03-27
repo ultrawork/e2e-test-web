@@ -253,6 +253,9 @@ test.describe('Notes App', () => {
       await page.waitForURL(/\/login/, { timeout: 15000 });
       await expect(page).toHaveURL(/\/login/);
 
+      // Wait for the login page to fully render (confirms page loaded & addInitScripts completed)
+      await expect(page.getByRole('heading', { name: 'Вход' })).toBeVisible({ timeout: 10000 });
+
       // Token should be cleared (clearToken() ran before the redirect)
       const tokenValue = await page.evaluate(() => localStorage.getItem('auth_token'));
       expect(tokenValue).toBeNull();
