@@ -1,10 +1,8 @@
 import { test, expect } from '@playwright/test';
 
-const API_BASE = 'http://localhost:4000';
-
 test.describe('Notes App', () => {
   test.beforeEach(async ({ page }) => {
-    await page.route(`${API_BASE}/api/notes`, async (route) => {
+    await page.route('**/api/notes', async (route) => {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
     });
     await page.addInitScript(() => {
