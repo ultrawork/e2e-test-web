@@ -40,9 +40,16 @@ test.describe('Notes App', () => {
   });
 
   test('SC-010: /notes without token shows authorization required', async ({ page }) => {
-    await page.goto('/notes');
+    // Ensure no auth token exists in localStorage
+    await page.addInitScript(() => {
+      localStorage.removeItem('auth_token');
+    });
 
-    await expect(page.getByRole('alert')).toContainText('Необходима авторизация');
+    await page.goto('/notes', { waitUntil: 'networkidle' });
+
+    // Use p[role="alert"] to specifically match the app's <p> element
+    // and avoid the Next.js route announcer <div role="alert" id="__next-route-announcer__">
+    await expect(page.locator('p[role="alert"]')).toContainText('Необходима авторизация', { timeout: 10000 });
   });
 
   test.describe('Authenticated', () => {
