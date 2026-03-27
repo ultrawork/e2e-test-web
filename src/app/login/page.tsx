@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+import { setToken, API_BASE } from '@/lib/api';
 
 export default function LoginPage(): React.ReactElement {
   const [error, setError] = useState('');
@@ -20,7 +19,7 @@ export default function LoginPage(): React.ReactElement {
         throw new Error(`Ошибка авторизации: ${response.status}`);
       }
       const data = await response.json();
-      localStorage.setItem('auth_token', data.token);
+      setToken(data.token);
       window.location.href = '/notes';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Неизвестная ошибка');

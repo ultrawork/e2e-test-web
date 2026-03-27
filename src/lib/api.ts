@@ -1,7 +1,7 @@
 import type { Note } from '@/types';
 
 const TOKEN_KEY = 'auth_token';
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 /** Получить токен из localStorage. */
 export function getToken(): string | null {
