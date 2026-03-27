@@ -121,7 +121,7 @@ export default function NotesPage(): React.ReactElement {
         style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}
       >
         <label htmlFor="new-note" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
-          New note
+          Enter a note
         </label>
         <input
           id="new-note"
