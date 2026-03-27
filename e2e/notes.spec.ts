@@ -3,10 +3,22 @@ import { test, expect } from '@playwright/test';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 async function getDevToken(): Promise<string> {
-  const response = await fetch(`${API_URL}/api/auth/dev-token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/api/auth/dev-token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (err) {
+    throw new Error(
+      `Failed to reach backend at ${API_URL}/api/auth/dev-token. Is the backend running? (${err})`,
+    );
+  }
+  if (!response.ok) {
+    throw new Error(
+      `dev-token endpoint returned ${response.status}: ${await response.text()}`,
+    );
+  }
   const data = await response.json();
   return data.token;
 }

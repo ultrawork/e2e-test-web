@@ -15,13 +15,18 @@ export default function NotesPage(): React.ReactElement {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
+  const [error, setError] = useState('');
 
   const loadNotes = useCallback(async () => {
     try {
       const data = await getNotes();
       setNotes(data);
-    } catch {
-      // 401 handled in apiRequest
+      setError('');
+    } catch (err) {
+      // 401 already handled in apiRequest (redirect)
+      if (err instanceof Error && err.message !== 'Unauthorized') {
+        setError('Ошибка при загрузке заметок');
+      }
     } finally {
       setLoading(false);
     }
@@ -49,8 +54,12 @@ export default function NotesPage(): React.ReactElement {
       const note = await createNote(text);
       setNotes((prev) => [...prev, note]);
       setInput('');
-    } catch {
-      // 401 handled in apiRequest
+      setError('');
+    } catch (err) {
+      // 401 already handled in apiRequest (redirect)
+      if (err instanceof Error && err.message !== 'Unauthorized') {
+        setError('Ошибка при добавлении заметки');
+      }
     }
   }
 
@@ -58,8 +67,12 @@ export default function NotesPage(): React.ReactElement {
     try {
       await deleteNote(id);
       setNotes((prev) => prev.filter((n) => n.id !== id));
-    } catch {
-      // 401 handled in apiRequest
+      setError('');
+    } catch (err) {
+      // 401 already handled in apiRequest (redirect)
+      if (err instanceof Error && err.message !== 'Unauthorized') {
+        setError('Ошибка при удалении заметки');
+      }
     }
   }
 
@@ -93,6 +106,12 @@ export default function NotesPage(): React.ReactElement {
           Выйти
         </button>
       </div>
+
+      {error && (
+        <p role="alert" style={{ color: 'red', marginBottom: '1rem' }}>
+          {error}
+        </p>
+      )}
 
       <form
         onSubmit={(e) => {
