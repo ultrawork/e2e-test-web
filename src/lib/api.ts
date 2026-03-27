@@ -1,6 +1,6 @@
 /** API client with Authorization header and 401 handling. */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 /** Retrieve auth token from localStorage. */
 export function getToken(): string | null {

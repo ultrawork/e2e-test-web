@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 /**
  * Web v23: E2E-верификация /notes и api.ts против backend.
@@ -13,7 +13,7 @@ import { test, expect } from '@playwright/test';
 
 /** Set up route mock for /api/notes and inject token via addInitScript. */
 async function setupAuthenticatedPage(
-  page: Parameters<Parameters<typeof test>[1]>[0]['page'],
+  page: Page,
   token = 'test-token-v23',
 ): Promise<void> {
   await page.route('**/api/notes', async (route) => {
@@ -109,7 +109,7 @@ test.describe('Web v23: Notes Auth E2E', () => {
   });
 
   test('SC-06: при 401 от API токен удаляется и показывается требование авторизации', async ({ page }) => {
-    await page.route('http://localhost:4000/api/notes', async (route) => {
+    await page.route('**/api/notes', async (route) => {
       await route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Unauthorized' }) });
     });
 
