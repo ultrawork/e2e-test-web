@@ -31,7 +31,7 @@ export async function apiRequest<T>(
 
   if (res.status === 401) {
     clearToken();
-    window.location.href = '/login';
+    window.dispatchEvent(new Event('auth:unauthorized'));
     throw new Error('Unauthorized');
   }
 
@@ -39,6 +39,7 @@ export async function apiRequest<T>(
     throw new Error(`API error: ${res.status}`);
   }
 
+  // 204 No Content is a success (2xx) so !res.ok above won't catch it
   if (res.status === 204) {
     return undefined as T;
   }
