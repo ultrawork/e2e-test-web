@@ -218,13 +218,17 @@ test.describe('Notes App', () => {
 
     await page.getByLabel('New note').fill('Купить молоко');
     await page.getByRole('button', { name: 'Add' }).click();
+    await expect(page.getByText('Купить молоко')).toBeVisible();
+    await expect(page.getByText('Всего заметок: 1')).toBeVisible();
 
     await page.getByLabel('New note').fill('Позвонить маме');
     await page.getByRole('button', { name: 'Add' }).click();
+    await expect(page.getByText('Позвонить маме')).toBeVisible();
+    await expect(page.getByText('Всего заметок: 2')).toBeVisible();
 
     await page.getByLabel('New note').fill('Купить хлеб');
     await page.getByRole('button', { name: 'Add' }).click();
-
+    await expect(page.getByText('Купить хлеб')).toBeVisible();
     await expect(page.getByText('Всего заметок: 3')).toBeVisible();
 
     await page.getByPlaceholder('Поиск заметок...').fill('Купить');
