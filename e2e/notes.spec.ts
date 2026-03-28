@@ -10,12 +10,24 @@ test.describe('Notes App', () => {
   });
 
   test('SC-002: Navigate from home to /notes via link', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('token', 'test-token-v24');
+    });
+
+    await page.route(/\/api\/notes$/, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: '[]',
+      });
+    });
+
     await page.goto('/');
 
     await page.getByRole('link', { name: 'Go to Notes' }).click();
 
     await expect(page.getByRole('heading', { name: 'Notes' })).toBeVisible();
-    await expect(page.getByPlaceholder('Enter a note')).toBeVisible();
+    await expect(page.getByLabel('New note')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Add' })).toBeVisible();
     await expect(page.getByText('Всего заметок: 0')).toBeVisible();
   });
