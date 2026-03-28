@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
@@ -12,6 +13,14 @@ export default function NotesPage(): React.ReactElement {
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [hasToken, setHasToken] = useState<boolean | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const handleUnauthorized = () => router.push('/login');
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, [router]);
 
   useEffect(() => {
     const token = getToken();
@@ -20,8 +29,10 @@ export default function NotesPage(): React.ReactElement {
     if (token) {
       getNotes()
         .then(setNotes)
-        .catch(() => {
-          /* 401 handled inside apiRequest */
+        .catch((err: Error) => {
+          if (err.message !== 'Unauthorized') {
+            setError(err.message);
+          }
         });
     }
   }, []);
@@ -36,6 +47,15 @@ export default function NotesPage(): React.ReactElement {
         <h1>Notes</h1>
         <p>Необходима авторизация</p>
         <Link href="/login">Войти</Link>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+        <h1>Notes</h1>
+        <p style={{ color: 'red' }}>Ошибка: {error}</p>
       </main>
     );
   }

@@ -53,6 +53,23 @@
 - **Шаги:** Мок GET → 401 → `waitForResponse` → `goto`
 - **Результат:** Редирект на `/login`, `localStorage.getItem('token')` = null
 
+## Вывод Playwright (--reporter=list)
+
+```
+Running 6 tests using 1 worker
+
+  ✓ SC-001: Без токена — гейт авторизации (<1s)
+  ✓ SC-002: С токеном — список заметок из API (<1s)
+  ✓ SC-003: Создание заметки — счётчик растёт + Authorization в POST (<1s)
+  ✓ SC-004: Удаление заметки — счётчик уменьшается + Authorization в DELETE (<1s)
+  ✓ SC-005: api.ts добавляет Authorization: Bearer к GET-запросу (<1s)
+  ✓ SC-006: 401 от API — токен очищается + редирект на /login (<1s)
+
+  6 passed
+```
+
+> Для воспроизведения: `APP_URL=http://localhost:3000 npx playwright test e2e/web-notes-auth-v25.spec.ts --reporter=list`
+
 ## Найденные баги
 
 Нет.
