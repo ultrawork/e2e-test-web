@@ -1,31 +1,59 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
-
-interface Note {
-  id: number;
-  text: string;
-}
+import { getToken, getNotes, createNote, deleteNote } from '@/lib/api';
+import type { Note } from '@/lib/api';
 
 export default function NotesPage(): React.ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [hasToken, setHasToken] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const token = getToken();
+    setHasToken(!!token);
+
+    if (token) {
+      getNotes()
+        .then(setNotes)
+        .catch(() => {
+          /* 401 handled inside apiRequest */
+        });
+    }
+  }, []);
+
+  if (hasToken === null) {
+    return <main style={{ padding: '2rem', fontFamily: 'system-ui' }} />;
+  }
+
+  if (!hasToken) {
+    return (
+      <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
+        <h1>Notes</h1>
+        <p>Необходима авторизация</p>
+        <Link href="/login">Войти</Link>
+      </main>
+    );
+  }
 
   const filteredNotes = notes.filter((n) =>
-    n.text.toLowerCase().includes(searchQuery.toLowerCase())
+    n.text.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  function addNote(): void {
+  async function handleAdd(): Promise<void> {
     const text = input.trim();
     if (!text) return;
-    setNotes((prev) => [...prev, { id: Date.now(), text }]);
+    const created = await createNote(text);
+    setNotes((prev) => [...prev, created]);
     setInput('');
   }
 
-  function deleteNote(id: number): void {
+  async function handleDelete(id: string): Promise<void> {
+    await deleteNote(id);
     setNotes((prev) => prev.filter((n) => n.id !== id));
   }
 
@@ -36,11 +64,20 @@ export default function NotesPage(): React.ReactElement {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          addNote();
+          handleAdd();
         }}
         style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}
       >
-        <label htmlFor="new-note" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+        <label
+          htmlFor="new-note"
+          style={{
+            position: 'absolute',
+            width: 1,
+            height: 1,
+            overflow: 'hidden',
+            clip: 'rect(0,0,0,0)',
+          }}
+        >
           New note
         </label>
         <input
@@ -58,7 +95,10 @@ export default function NotesPage(): React.ReactElement {
 
       <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
-      <NotesCounter totalCount={notes.length} filteredCount={searchQuery ? filteredNotes.length : undefined} />
+      <NotesCounter
+        totalCount={notes.length}
+        filteredCount={searchQuery ? filteredNotes.length : undefined}
+      />
 
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {filteredNotes.map((note) => (
@@ -74,7 +114,7 @@ export default function NotesPage(): React.ReactElement {
           >
             <span>{note.text}</span>
             <button
-              onClick={() => deleteNote(note.id)}
+              onClick={() => handleDelete(note.id)}
               aria-label={`Delete note: ${note.text}`}
               style={{ padding: '0.25rem 0.5rem' }}
             >
