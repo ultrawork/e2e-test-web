@@ -149,6 +149,22 @@ test.describe('Notes App', () => {
   });
 
   test('SC-005: Empty or whitespace input does not add a note', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('token', 'test-token-v24');
+    });
+
+    await page.route(/\/api\/notes$/, async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([]),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
     await page.goto('/notes');
 
     await expect(page.getByText('Всего заметок: 0')).toBeVisible();
