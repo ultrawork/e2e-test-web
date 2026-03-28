@@ -88,6 +88,9 @@ test.describe('Web Notes Auth v24 — верификация api.ts и /notes', 
 
   test('SC-004: Удаление заметки — счётчик уменьшается + Authorization в DELETE', async ({ page }) => {
     let deleteAuthHeader: string | null = null;
+    const notes = [
+      { id: 'del-1', text: 'Заметка для удаления', createdAt: '2026-03-28T10:00:00Z' },
+    ];
 
     await page.addInitScript(() => {
       localStorage.setItem('token', 'test-token-v24');
@@ -98,9 +101,7 @@ test.describe('Web Notes Auth v24 — верификация api.ts и /notes', 
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify([
-            { id: 'del-1', text: 'Заметка для удаления', createdAt: '2026-03-28T10:00:00Z' },
-          ]),
+          body: JSON.stringify(notes),
         });
       } else {
         await route.continue();
@@ -110,6 +111,10 @@ test.describe('Web Notes Auth v24 — верификация api.ts и /notes', 
     await page.route(/\/api\/notes\/[\w-]+/, async (route) => {
       if (route.request().method() === 'DELETE') {
         deleteAuthHeader = route.request().headers()['authorization'] ?? null;
+        const url = route.request().url();
+        const id = url.split('/').pop();
+        const idx = notes.findIndex((n) => n.id === id);
+        if (idx !== -1) notes.splice(idx, 1);
         await route.fulfill({ status: 204 });
       } else {
         await route.continue();
