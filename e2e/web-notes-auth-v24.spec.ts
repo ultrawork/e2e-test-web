@@ -172,9 +172,12 @@ test.describe('Web Notes Auth v24 — верификация api.ts и /notes', 
       });
     });
 
-    await page.goto(`${APP_URL}/notes`);
+    await Promise.all([
+      page.waitForResponse(/\/api\/notes$/),
+      page.goto(`${APP_URL}/notes`),
+    ]);
 
-    await page.waitForURL(/\/login/);
+    await page.waitForURL(/\/login/, { timeout: 10000 });
 
     const token = await page.evaluate(() => localStorage.getItem('token'));
     expect(token).toBeNull();
