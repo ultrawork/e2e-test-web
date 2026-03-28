@@ -1,4 +1,4 @@
-# E2E-отчёт: Web Notes Auth v24
+# E2E-отчёт: Web Notes v24
 
 ## Информация о прогоне
 
@@ -8,9 +8,7 @@
 | **Версия** | v24 |
 | **Платформа** | Web (Next.js 15 + React 19) |
 | **Инструмент** | Playwright 1.52+ |
-| **APP_URL** | http://localhost:3000 |
-| **NEXT_PUBLIC_API_URL** | http://localhost:4000 |
-| **API mock** | `page.route()` — backend не требуется |
+| **BASE_URL** | from playwright.config.ts |
 
 ## Вердикт
 
@@ -20,38 +18,38 @@
 
 | ID | Сценарий | Статус | Время |
 |----|----------|--------|-------|
-| SC-001 | Без токена — гейт авторизации | PASS | <1s |
-| SC-002 | С токеном — список заметок из API | PASS | <1s |
-| SC-003 | Создание заметки + Authorization в POST | PASS | <1s |
-| SC-004 | Удаление заметки + Authorization в DELETE | PASS | <1s |
-| SC-005 | Authorization: Bearer в GET-запросе | PASS | <1s |
-| SC-006 | 401 — очистка токена + редирект на /login | PASS | <1s |
+| SC-001 | /notes page renders initial state correctly | PASS | <1s |
+| SC-002 | Adding note via Enter key submits form | PASS | <1s |
+| SC-003 | Input field clears after adding a note | PASS | <1s |
+| SC-004 | Delete specific note preserves other notes | PASS | <1s |
+| SC-005 | Search + delete interaction updates counter | PASS | <1s |
+| SC-006 | Delete button aria-label verification | PASS | <1s |
 
 ## Детали сценариев
 
-### SC-001: Без токена — гейт авторизации
-- **Шаги:** Очистка localStorage → переход на `/notes`
-- **Результат:** Отображается "Необходима авторизация", ссылка "Войти" с href="/login", поле ввода скрыто
+### SC-001: /notes page renders initial state correctly
+- **Шаги:** Переход на `/notes`
+- **Результат:** Heading, input, button, counter, search bar — всё отображается корректно
 
-### SC-002: С токеном — список заметок из API
-- **Шаги:** Установка токена → мок GET `/api/notes` → переход на `/notes`
-- **Результат:** Заметки из API отображаются, счётчик "Всего заметок: 1"
+### SC-002: Adding note via Enter key submits form
+- **Шаги:** Ввод текста → нажатие Enter
+- **Результат:** Заметка появляется, счётчик = 1
 
-### SC-003: Создание заметки + Authorization в POST
-- **Шаги:** Мок GET (пустой список) + мок POST → ввод заметки → клик "Add"
-- **Результат:** Заметка появляется, счётчик инкрементируется, POST содержит `Authorization: Bearer test-token-v24`
+### SC-003: Input field clears after adding a note
+- **Шаги:** Ввод текста → клик "Add"
+- **Результат:** Заметка в списке, input пуст
 
-### SC-004: Удаление заметки + Authorization в DELETE
-- **Шаги:** Мок GET (1 заметка) + мок DELETE → клик "Delete"
-- **Результат:** Заметка исчезает, счётчик декрементируется, DELETE содержит `Authorization: Bearer test-token-v24`
+### SC-004: Delete specific note preserves other notes
+- **Шаги:** Добавление 3 заметок → удаление средней
+- **Результат:** Удалённая заметка исчезла, остальные на месте, счётчик = 2
 
-### SC-005: Authorization: Bearer в GET-запросе
-- **Шаги:** Мок GET с перехватом заголовков → переход на `/notes`
-- **Результат:** GET-запрос содержит `Authorization: Bearer my-secret-token`
+### SC-005: Search + delete interaction updates counter correctly
+- **Шаги:** 3 заметки → поиск "Купить" → удаление одной
+- **Результат:** Счётчик корректно обновляется при delete в фильтрованном режиме
 
-### SC-006: 401 — очистка токена + редирект на /login
-- **Шаги:** Мок GET → 401 → переход на `/notes`
-- **Результат:** Редирект на `/login`, `localStorage.token` === `null`
+### SC-006: Delete button aria-label verification
+- **Шаги:** 2 заметки → проверка aria-label → удаление первой
+- **Результат:** Кнопки имеют корректные aria-label, удаление работает точечно
 
 ## Найденные баги
 
@@ -62,4 +60,3 @@
 - **OS:** Linux
 - **Node.js:** 18+
 - **Browser:** Chromium (Playwright default)
-- **Backend:** Не требуется (все API-вызовы замокированы через `page.route()`)
