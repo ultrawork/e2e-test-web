@@ -1,14 +1,12 @@
 import { test, expect } from '@playwright/test';
 
-const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
-
 test.describe('Web Notes Auth v24 — верификация api.ts и /notes', () => {
   test('SC-001: Без токена — гейт авторизации', async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.clear();
     });
 
-    await page.goto(`${APP_URL}/notes`);
+    await page.goto('/notes');
 
     await expect(page.getByText('Необходима авторизация')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Войти' })).toHaveAttribute('href', '/login');
@@ -34,7 +32,7 @@ test.describe('Web Notes Auth v24 — верификация api.ts и /notes', 
       }
     });
 
-    await page.goto(`${APP_URL}/notes`);
+    await page.goto('/notes');
 
     await expect(page.getByText('Заметка из API')).toBeVisible();
     await expect(page.getByText('Всего заметок: 1')).toBeVisible();
@@ -75,7 +73,7 @@ test.describe('Web Notes Auth v24 — верификация api.ts и /notes', 
       }
     });
 
-    await page.goto(`${APP_URL}/notes`);
+    await page.goto('/notes');
     await expect(page.getByText('Всего заметок: 0')).toBeVisible();
 
     await page.locator('#new-note').fill('Тестовая заметка v24');
@@ -121,7 +119,7 @@ test.describe('Web Notes Auth v24 — верификация api.ts и /notes', 
       }
     });
 
-    await page.goto(`${APP_URL}/notes`);
+    await page.goto('/notes');
     await expect(page.getByText('Всего заметок: 1')).toBeVisible();
 
     await page.getByRole('button', { name: 'Delete note: Заметка для удаления' }).click();
@@ -153,7 +151,7 @@ test.describe('Web Notes Auth v24 — верификация api.ts и /notes', 
 
     await Promise.all([
       page.waitForResponse(/\/api\/notes$/),
-      page.goto(`${APP_URL}/notes`),
+      page.goto('/notes'),
     ]);
 
     expect(capturedAuthHeader).toBe('Bearer my-secret-token');
@@ -174,7 +172,7 @@ test.describe('Web Notes Auth v24 — верификация api.ts и /notes', 
 
     await Promise.all([
       page.waitForResponse(/\/api\/notes$/),
-      page.goto(`${APP_URL}/notes`),
+      page.goto('/notes'),
     ]);
 
     await page.waitForURL(/\/login/, { timeout: 10000 });
