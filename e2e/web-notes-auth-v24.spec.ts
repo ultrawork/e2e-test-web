@@ -151,9 +151,10 @@ test.describe('Web Notes Auth v24 — верификация api.ts и /notes', 
       }
     });
 
-    await page.goto(`${APP_URL}/notes`);
-
-    await page.waitForResponse(/\/api\/notes$/);
+    await Promise.all([
+      page.waitForResponse(/\/api\/notes$/),
+      page.goto(`${APP_URL}/notes`),
+    ]);
 
     expect(capturedAuthHeader).toBe('Bearer my-secret-token');
   });
