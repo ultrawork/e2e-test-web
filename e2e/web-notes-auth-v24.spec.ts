@@ -42,6 +42,7 @@ test.describe('Web Notes Auth v24 — верификация api.ts и /notes', 
 
   test('SC-003: Создание заметки — счётчик растёт + Authorization в POST', async ({ page }) => {
     let postAuthHeader: string | null = null;
+    const createdNotes: { id: string; text: string; createdAt: string }[] = [];
 
     await page.addInitScript(() => {
       localStorage.setItem('token', 'test-token-v24');
@@ -54,18 +55,20 @@ test.describe('Web Notes Auth v24 — верификация api.ts и /notes', 
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify([]),
+          body: JSON.stringify(createdNotes),
         });
       } else if (method === 'POST') {
         postAuthHeader = route.request().headers()['authorization'] ?? null;
+        const newNote = {
+          id: 'new-1',
+          text: 'Тестовая заметка v24',
+          createdAt: '2026-03-28T12:00:00Z',
+        };
+        createdNotes.push(newNote);
         await route.fulfill({
           status: 201,
           contentType: 'application/json',
-          body: JSON.stringify({
-            id: 'new-1',
-            text: 'Тестовая заметка v24',
-            createdAt: '2026-03-28T12:00:00Z',
-          }),
+          body: JSON.stringify(newNote),
         });
       } else {
         await route.continue();
