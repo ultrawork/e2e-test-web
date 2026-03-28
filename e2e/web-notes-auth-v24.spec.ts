@@ -159,7 +159,9 @@ test.describe('Web Notes Auth v24 — верификация api.ts и /notes', 
 
   test('SC-006: 401 от API — токен очищается + редирект на /login', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('token', 'test-token-v24');
+      if (window.location.pathname !== '/login') {
+        localStorage.setItem('token', 'test-token-v24');
+      }
     });
 
     await page.route(/\/api\/notes$/, async (route) => {
