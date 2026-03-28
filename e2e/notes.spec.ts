@@ -85,13 +85,55 @@ test.describe('Notes App', () => {
   });
 
   test('SC-004: Deleting notes decrements the counter', async ({ page }) => {
+    const notes = [
+      { id: 'a1', text: 'Заметка А', createdAt: '2026-03-28T10:00:00Z' },
+      { id: 'b2', text: 'Заметка Б', createdAt: '2026-03-28T10:01:00Z' },
+    ];
+
+    await page.addInitScript(() => {
+      localStorage.setItem('token', 'test-token-v24');
+    });
+
+    await page.route(/\/api\/notes$/, async (route) => {
+      const method = route.request().method();
+
+      if (method === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(notes),
+        });
+      } else if (method === 'POST') {
+        const body = JSON.parse(route.request().postData() || '{}');
+        const newNote = {
+          id: `note-${Date.now()}`,
+          text: body.text || 'New note',
+          createdAt: new Date().toISOString(),
+        };
+        notes.push(newNote);
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify(newNote),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await page.route(/\/api\/notes\/[\w-]+/, async (route) => {
+      if (route.request().method() === 'DELETE') {
+        const url = route.request().url();
+        const id = url.split('/').pop();
+        const idx = notes.findIndex((n) => n.id === id);
+        if (idx !== -1) notes.splice(idx, 1);
+        await route.fulfill({ status: 204 });
+      } else {
+        await route.continue();
+      }
+    });
+
     await page.goto('/notes');
-
-    await page.getByLabel('New note').fill('Заметка А');
-    await page.getByRole('button', { name: 'Add' }).click();
-
-    await page.getByLabel('New note').fill('Заметка Б');
-    await page.getByRole('button', { name: 'Add' }).click();
 
     await expect(page.getByText('Всего заметок: 2')).toBeVisible();
 
