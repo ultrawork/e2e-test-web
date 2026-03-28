@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
+const APP_URL = process.env.APP_URL ?? 'http://localhost:4000';
 
 test.describe('Web Notes Auth v24 — верификация api.ts и /notes', () => {
   test('SC-001: Без токена — гейт авторизации', async ({ page }) => {
