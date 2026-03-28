@@ -33,6 +33,40 @@ test.describe('Notes App', () => {
   });
 
   test('SC-003: Adding notes increments the counter', async ({ page }) => {
+    const createdNotes: { id: string; text: string; createdAt: string }[] = [];
+    let noteCounter = 0;
+
+    await page.addInitScript(() => {
+      localStorage.setItem('token', 'test-token-v24');
+    });
+
+    await page.route(/\/api\/notes$/, async (route) => {
+      const method = route.request().method();
+
+      if (method === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(createdNotes),
+        });
+      } else if (method === 'POST') {
+        noteCounter++;
+        const newNote = {
+          id: `note-${noteCounter}`,
+          text: JSON.parse(route.request().postData() || '{}').text || `Note ${noteCounter}`,
+          createdAt: new Date().toISOString(),
+        };
+        createdNotes.push(newNote);
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify(newNote),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
     await page.goto('/notes');
 
     await expect(page.getByText('Всего заметок: 0')).toBeVisible();
