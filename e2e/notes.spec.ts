@@ -179,7 +179,7 @@ test.describe('Notes App', () => {
   test('SC-008: Search with no results shows empty list', async ({ page }) => {
     await page.goto('/notes');
 
-    await page.getByLabel('New note').fill('Тестовая заметка');
+    await page.getByPlaceholder('Enter a note').fill('Тестовая заметка');
     await page.getByRole('button', { name: 'Add' }).click();
 
     await expect(page.getByText('Всего заметок: 1')).toBeVisible();
