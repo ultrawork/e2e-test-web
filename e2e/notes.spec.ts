@@ -92,11 +92,11 @@ test.describe('Notes App', () => {
   test('SC-004: Deleting notes decrements the counter', async ({ page }) => {
     await page.goto('/notes');
 
-    await page.getByLabel('New note').fill('Заметка А');
+    await page.getByPlaceholder('Enter a note').fill('Заметка А');
     await page.getByRole('button', { name: 'Add' }).click();
     await expect(page.getByText('Заметка А')).toBeVisible();
 
-    await page.getByLabel('New note').fill('Заметка Б');
+    await page.getByPlaceholder('Enter a note').fill('Заметка Б');
     await page.getByRole('button', { name: 'Add' }).click();
     await expect(page.getByText('Заметка Б')).toBeVisible();
 
