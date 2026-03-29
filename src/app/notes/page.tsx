@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
+import { fetchNotes, type Note as ApiNote } from '@/lib/api';
 
 interface Note {
   id: number;
@@ -13,6 +14,34 @@ export default function NotesPage(): React.ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadNotes = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const apiNotes: ApiNote[] = await fetchNotes();
+      setNotes(apiNotes.map((n) => ({ id: n.id, text: n.title })));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load notes';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadNotes();
+  }, [loadNotes]);
+
+  useEffect(() => {
+    const handler = () => {
+      setError('Unauthorized. Please log in.');
+    };
+    window.addEventListener('auth:unauthorized', handler);
+    return () => window.removeEventListener('auth:unauthorized', handler);
+  }, []);
 
   const filteredNotes = notes.filter((n) =>
     n.text.toLowerCase().includes(searchQuery.toLowerCase())
@@ -32,6 +61,14 @@ export default function NotesPage(): React.ReactElement {
   return (
     <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
       <h1>Notes</h1>
+
+      {error && (
+        <div data-testid="error-message" style={{ color: 'red', marginBottom: '1rem' }}>
+          {error}
+        </div>
+      )}
+
+      {loading && !error && <p>Loading...</p>}
 
       <form
         onSubmit={(e) => {
