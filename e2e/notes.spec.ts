@@ -76,13 +76,13 @@ test.describe('Notes App', () => {
 
     await expect(page.getByText('Всего заметок: 0')).toBeVisible();
 
-    await page.getByLabel('New note').fill('Первая заметка');
+    await page.getByPlaceholder('Enter a note').fill('Первая заметка');
     await page.getByRole('button', { name: 'Add' }).click();
 
     await expect(page.getByText('Первая заметка')).toBeVisible();
     await expect(page.getByText('Всего заметок: 1')).toBeVisible();
 
-    await page.getByLabel('New note').fill('Вторая заметка');
+    await page.getByPlaceholder('Enter a note').fill('Вторая заметка');
     await page.getByRole('button', { name: 'Add' }).click();
 
     await expect(page.getByText('Вторая заметка')).toBeVisible();
