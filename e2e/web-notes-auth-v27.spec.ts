@@ -125,7 +125,7 @@ test.describe('Web v27: /notes Authorization', () => {
     );
 
     await page.goto('/notes');
-    await page.waitForLoadState('networkidle');
+    await expect(page.getByText('Note A v27')).toBeVisible();
 
     expect(capturedAuth.length).toBeGreaterThan(0);
     expect(capturedAuth[0]).toBe(`Bearer ${TOKEN}`);

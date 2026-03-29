@@ -1,92 +1,32 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
 
 interface Note {
   id: number;
-  title: string;
+  text: string;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
-
 export default function NotesPage(): React.ReactElement {
-  const router = useRouter();
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [authenticated, setAuthenticated] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-    setAuthenticated(true);
-
-    fetch(`${API_BASE}/notes`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (res.status === 401) {
-          localStorage.removeItem('token');
-          router.push('/login');
-          return null;
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (data) setNotes(data);
-      });
-  }, [router]);
 
   const filteredNotes = notes.filter((n) =>
-    n.title.toLowerCase().includes(searchQuery.toLowerCase())
+    n.text.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  async function addNote(): Promise<void> {
-    const title = input.trim();
-    if (!title) return;
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_BASE}/notes`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ title }),
-    });
-    if (res.status === 401) {
-      localStorage.removeItem('token');
-      router.push('/login');
-      return;
-    }
-    const created = await res.json();
-    setNotes((prev) => [...prev, created]);
+  function addNote(): void {
+    const text = input.trim();
+    if (!text) return;
+    setNotes((prev) => [...prev, { id: Date.now(), text }]);
     setInput('');
   }
 
-  async function deleteNote(id: number): Promise<void> {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_BASE}/notes/${id}`, {
-      method: 'DELETE',
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    });
-    if (res.status === 401) {
-      localStorage.removeItem('token');
-      router.push('/login');
-      return;
-    }
+  function deleteNote(id: number): void {
     setNotes((prev) => prev.filter((n) => n.id !== id));
-  }
-
-  if (!authenticated) {
-    return <></>;
   }
 
   return (
@@ -132,10 +72,10 @@ export default function NotesPage(): React.ReactElement {
               borderBottom: '1px solid #eee',
             }}
           >
-            <span>{note.title}</span>
+            <span>{note.text}</span>
             <button
               onClick={() => deleteNote(note.id)}
-              aria-label={`Delete note: ${note.title}`}
+              aria-label={`Delete note: ${note.text}`}
               style={{ padding: '0.25rem 0.5rem' }}
             >
               Delete
