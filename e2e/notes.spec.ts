@@ -131,15 +131,15 @@ test.describe('Notes App', () => {
   test('SC-006: Search filters notes by title', async ({ page }) => {
     await page.goto('/notes');
 
-    await page.getByLabel('New note').fill('Купить молоко');
+    await page.getByPlaceholder('Enter a note').fill('Купить молоко');
     await page.getByRole('button', { name: 'Add' }).click();
     await expect(page.getByText('Купить молоко')).toBeVisible();
 
-    await page.getByLabel('New note').fill('Позвонить маме');
+    await page.getByPlaceholder('Enter a note').fill('Позвонить маме');
     await page.getByRole('button', { name: 'Add' }).click();
     await expect(page.getByText('Позвонить маме')).toBeVisible();
 
-    await page.getByLabel('New note').fill('Купить хлеб');
+    await page.getByPlaceholder('Enter a note').fill('Купить хлеб');
     await page.getByRole('button', { name: 'Add' }).click();
     await expect(page.getByText('Купить хлеб')).toBeVisible();
 
