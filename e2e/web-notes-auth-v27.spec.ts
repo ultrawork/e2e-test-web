@@ -75,7 +75,7 @@ test.describe('Web v27: /notes Authorization', () => {
     });
 
     await page.goto('/notes');
-    await page.getByLabel('New note').fill('New v27 note');
+    await page.getByPlaceholder('Enter a note').fill('New v27 note');
     await page.getByRole('button', { name: 'Add' }).click();
     await expect(page.getByText('New v27 note')).toBeVisible();
   });
