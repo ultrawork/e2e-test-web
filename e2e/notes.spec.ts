@@ -1,6 +1,57 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+
+const TOKEN = 'test-token-notes';
+
+interface Note {
+  id: number;
+  title: string;
+}
+
+async function setupNotesApi(page: Page): Promise<void> {
+  const notes: Note[] = [];
+  let nextId = 1;
+
+  await page.route('**/api/notes', (route) => {
+    const req = route.request();
+    if (req.method() === 'GET') {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(notes),
+      });
+    } else if (req.method() === 'POST') {
+      const body = req.postDataJSON() as { title: string };
+      const created: Note = { id: nextId++, title: body.title };
+      notes.push(created);
+      route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify(created),
+      });
+    } else {
+      route.continue();
+    }
+  });
+
+  await page.route('**/api/notes/*', (route) => {
+    if (route.request().method() === 'DELETE') {
+      const url = route.request().url();
+      const id = parseInt(url.split('/').pop()!);
+      const idx = notes.findIndex((n) => n.id === id);
+      if (idx !== -1) notes.splice(idx, 1);
+      route.fulfill({ status: 204, body: '' });
+    } else {
+      route.continue();
+    }
+  });
+}
 
 test.describe('Notes App', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript((t) => localStorage.setItem('token', t), TOKEN);
+    await setupNotesApi(page);
+  });
+
   test('SC-001: Home page displays heading, welcome text, and link', async ({ page }) => {
     await page.goto('/');
 
@@ -25,13 +76,13 @@ test.describe('Notes App', () => {
 
     await expect(page.getByText('Всего заметок: 0')).toBeVisible();
 
-    await page.getByLabel('New note').fill('Первая заметка');
+    await page.getByPlaceholder('Enter a note').fill('Первая заметка');
     await page.getByRole('button', { name: 'Add' }).click();
 
     await expect(page.getByText('Первая заметка')).toBeVisible();
     await expect(page.getByText('Всего заметок: 1')).toBeVisible();
 
-    await page.getByLabel('New note').fill('Вторая заметка');
+    await page.getByPlaceholder('Enter a note').fill('Вторая заметка');
     await page.getByRole('button', { name: 'Add' }).click();
 
     await expect(page.getByText('Вторая заметка')).toBeVisible();
@@ -41,11 +92,13 @@ test.describe('Notes App', () => {
   test('SC-004: Deleting notes decrements the counter', async ({ page }) => {
     await page.goto('/notes');
 
-    await page.getByLabel('New note').fill('Заметка А');
+    await page.getByPlaceholder('Enter a note').fill('Заметка А');
     await page.getByRole('button', { name: 'Add' }).click();
+    await expect(page.getByText('Заметка А')).toBeVisible();
 
-    await page.getByLabel('New note').fill('Заметка Б');
+    await page.getByPlaceholder('Enter a note').fill('Заметка Б');
     await page.getByRole('button', { name: 'Add' }).click();
+    await expect(page.getByText('Заметка Б')).toBeVisible();
 
     await expect(page.getByText('Всего заметок: 2')).toBeVisible();
 
@@ -69,7 +122,7 @@ test.describe('Notes App', () => {
 
     await expect(page.getByText('Всего заметок: 0')).toBeVisible();
 
-    await page.getByLabel('New note').fill('   ');
+    await page.getByPlaceholder('Enter a note').fill('   ');
     await page.getByRole('button', { name: 'Add' }).click();
 
     await expect(page.getByText('Всего заметок: 0')).toBeVisible();
@@ -78,14 +131,17 @@ test.describe('Notes App', () => {
   test('SC-006: Search filters notes by title', async ({ page }) => {
     await page.goto('/notes');
 
-    await page.getByLabel('New note').fill('Купить молоко');
+    await page.getByPlaceholder('Enter a note').fill('Купить молоко');
     await page.getByRole('button', { name: 'Add' }).click();
+    await expect(page.getByText('Купить молоко')).toBeVisible();
 
-    await page.getByLabel('New note').fill('Позвонить маме');
+    await page.getByPlaceholder('Enter a note').fill('Позвонить маме');
     await page.getByRole('button', { name: 'Add' }).click();
+    await expect(page.getByText('Позвонить маме')).toBeVisible();
 
-    await page.getByLabel('New note').fill('Купить хлеб');
+    await page.getByPlaceholder('Enter a note').fill('Купить хлеб');
     await page.getByRole('button', { name: 'Add' }).click();
+    await expect(page.getByText('Купить хлеб')).toBeVisible();
 
     await expect(page.getByText('Всего заметок: 3')).toBeVisible();
 
@@ -100,11 +156,13 @@ test.describe('Notes App', () => {
   test('SC-007: Clearing search shows all notes', async ({ page }) => {
     await page.goto('/notes');
 
-    await page.getByLabel('New note').fill('Заметка раз');
+    await page.getByPlaceholder('Enter a note').fill('Заметка раз');
     await page.getByRole('button', { name: 'Add' }).click();
+    await expect(page.getByText('Заметка раз')).toBeVisible();
 
-    await page.getByLabel('New note').fill('Заметка два');
+    await page.getByPlaceholder('Enter a note').fill('Заметка два');
     await page.getByRole('button', { name: 'Add' }).click();
+    await expect(page.getByText('Заметка два')).toBeVisible();
 
     await page.getByPlaceholder('Поиск заметок...').fill('раз');
 
@@ -121,7 +179,7 @@ test.describe('Notes App', () => {
   test('SC-008: Search with no results shows empty list', async ({ page }) => {
     await page.goto('/notes');
 
-    await page.getByLabel('New note').fill('Тестовая заметка');
+    await page.getByPlaceholder('Enter a note').fill('Тестовая заметка');
     await page.getByRole('button', { name: 'Add' }).click();
 
     await expect(page.getByText('Всего заметок: 1')).toBeVisible();
@@ -135,7 +193,7 @@ test.describe('Notes App', () => {
   test('SC-009: Search is case-insensitive', async ({ page }) => {
     await page.goto('/notes');
 
-    await page.getByLabel('New note').fill('Важная Заметка');
+    await page.getByPlaceholder('Enter a note').fill('Важная Заметка');
     await page.getByRole('button', { name: 'Add' }).click();
 
     await page.getByPlaceholder('Поиск заметок...').fill('важная заметка');
