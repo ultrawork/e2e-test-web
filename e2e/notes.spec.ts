@@ -122,7 +122,7 @@ test.describe('Notes App', () => {
 
     await expect(page.getByText('Всего заметок: 0')).toBeVisible();
 
-    await page.getByLabel('New note').fill('   ');
+    await page.getByPlaceholder('Enter a note').fill('   ');
     await page.getByRole('button', { name: 'Add' }).click();
 
     await expect(page.getByText('Всего заметок: 0')).toBeVisible();
