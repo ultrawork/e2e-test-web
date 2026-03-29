@@ -16,10 +16,12 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api
 npx playwright test e2e/web-notes-auth-v26.spec.ts
 ```
 
-### Использование токена (beforeEach)
+### Использование токена (per-test via addInitScript)
 
 ```ts
-localStorage.setItem('token', 'test-token-v26');
+await page.addInitScript(() => {
+  localStorage.setItem('token', 'test-token-v26');
+});
 ```
 
 ### Ожидаемый результат
