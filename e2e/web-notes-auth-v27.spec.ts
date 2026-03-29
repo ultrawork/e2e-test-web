@@ -14,6 +14,14 @@ const SEED_NOTES: Note[] = [
 
 test.describe('Web v27: /notes Authorization', () => {
   test('SC-001: redirects to /login when no auth token', async ({ page }) => {
+    await page.route('**/api/notes', (route) =>
+      route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Unauthorized' }),
+      }),
+    );
+
     await page.goto('/notes');
     await expect(page).toHaveURL(/\/login/);
   });
