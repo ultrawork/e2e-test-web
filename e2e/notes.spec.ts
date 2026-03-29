@@ -193,7 +193,7 @@ test.describe('Notes App', () => {
   test('SC-009: Search is case-insensitive', async ({ page }) => {
     await page.goto('/notes');
 
-    await page.getByLabel('New note').fill('Важная Заметка');
+    await page.getByPlaceholder('Enter a note').fill('Важная Заметка');
     await page.getByRole('button', { name: 'Add' }).click();
 
     await page.getByPlaceholder('Поиск заметок...').fill('важная заметка');
