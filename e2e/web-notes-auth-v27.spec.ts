@@ -132,8 +132,6 @@ test.describe('Web v27: /notes Authorization', () => {
   });
 
   test('SC-006: 401 response clears token and redirects to /login', async ({ page }) => {
-    await page.addInitScript((t) => localStorage.setItem('token', t), TOKEN);
-
     await page.route('**/api/notes', (route) =>
       route.fulfill({
         status: 401,
@@ -142,7 +140,10 @@ test.describe('Web v27: /notes Authorization', () => {
       }),
     );
 
+    await page.goto('/login');
+    await page.evaluate((t) => localStorage.setItem('token', t), TOKEN);
     await page.goto('/notes');
+
     await expect(page).toHaveURL(/\/login/);
 
     const stored = await page.evaluate(() => localStorage.getItem('token'));
