@@ -156,11 +156,11 @@ test.describe('Notes App', () => {
   test('SC-007: Clearing search shows all notes', async ({ page }) => {
     await page.goto('/notes');
 
-    await page.getByLabel('New note').fill('Заметка раз');
+    await page.getByPlaceholder('Enter a note').fill('Заметка раз');
     await page.getByRole('button', { name: 'Add' }).click();
     await expect(page.getByText('Заметка раз')).toBeVisible();
 
-    await page.getByLabel('New note').fill('Заметка два');
+    await page.getByPlaceholder('Enter a note').fill('Заметка два');
     await page.getByRole('button', { name: 'Add' }).click();
     await expect(page.getByText('Заметка два')).toBeVisible();
 
