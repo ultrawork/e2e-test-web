@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const TOKEN = 'test-token-v28';
+const TOKEN = 'test-token-v30';
 
 interface Note {
   id: number;
@@ -8,11 +8,11 @@ interface Note {
 }
 
 const SEED_NOTES: Note[] = [
-  { id: 1, title: 'Note A v28' },
-  { id: 2, title: 'Note B v28' },
+  { id: 1, title: 'Note A v30' },
+  { id: 2, title: 'Note B v30' },
 ];
 
-test.describe('Web v28: /notes Authorization', () => {
+test.describe('Web: /notes Authorization', () => {
   test('SC-001: redirects to /login when no auth token', async ({ page }) => {
     await page.route('**/api/notes', (route) =>
       route.fulfill({
@@ -44,15 +44,15 @@ test.describe('Web v28: /notes Authorization', () => {
 
     await page.goto('/notes');
 
-    await expect(page.getByText('Note A v28')).toBeVisible();
-    await expect(page.getByText('Note B v28')).toBeVisible();
+    await expect(page.getByText('Note A v30')).toBeVisible();
+    await expect(page.getByText('Note B v30')).toBeVisible();
     await page.screenshot({ path: 'screenshots/SC-002-notes-list.png' });
   });
 
   test('SC-003: POST /api/notes stateful mock with Authorization Bearer', async ({ page }) => {
     await page.addInitScript((t) => localStorage.setItem('token', t), TOKEN);
 
-    const notes: Note[] = [{ id: 1, title: 'Existing v28' }];
+    const notes: Note[] = [{ id: 1, title: 'Existing v30' }];
 
     await page.route('**/api/notes', (route) => {
       const req = route.request();
@@ -77,16 +77,16 @@ test.describe('Web v28: /notes Authorization', () => {
     });
 
     await page.goto('/notes');
-    await page.getByPlaceholder('Enter a note').fill('New v28 note');
+    await page.getByPlaceholder('Enter a note').fill('New v30 note');
     await page.getByRole('button', { name: 'Add' }).click();
-    await expect(page.getByText('New v28 note')).toBeVisible();
+    await expect(page.getByText('New v30 note')).toBeVisible();
     await page.screenshot({ path: 'screenshots/SC-003-post-note.png' });
   });
 
   test('SC-004: DELETE note with Authorization Bearer', async ({ page }) => {
     await page.addInitScript((t) => localStorage.setItem('token', t), TOKEN);
 
-    const notes: Note[] = [{ id: 1, title: 'Delete me v28' }];
+    const notes: Note[] = [{ id: 1, title: 'Delete me v30' }];
 
     await page.route('**/api/notes', (route) => {
       if (route.request().method() === 'GET') {
@@ -110,9 +110,9 @@ test.describe('Web v28: /notes Authorization', () => {
     });
 
     await page.goto('/notes');
-    await expect(page.getByText('Delete me v28')).toBeVisible();
-    await page.getByRole('button', { name: 'Delete note: Delete me v28' }).click();
-    await expect(page.getByText('Delete me v28')).not.toBeVisible();
+    await expect(page.getByText('Delete me v30')).toBeVisible();
+    await page.getByRole('button', { name: 'Delete note: Delete me v30' }).click();
+    await expect(page.getByText('Delete me v30')).not.toBeVisible();
     await page.screenshot({ path: 'screenshots/SC-004-delete-note.png' });
   });
 
@@ -137,7 +137,7 @@ test.describe('Web v28: /notes Authorization', () => {
     );
 
     await page.goto('/notes');
-    await expect(page.getByText('Note A v28')).toBeVisible();
+    await expect(page.getByText('Note A v30')).toBeVisible();
 
     expect(capturedAuth.length).toBeGreaterThan(0);
     expect(capturedAuth[0]).toBe(`Bearer ${TOKEN}`);
