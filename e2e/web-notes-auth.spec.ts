@@ -12,7 +12,7 @@ const SEED_NOTES: Note[] = [
   { id: 2, title: 'Note B v30' },
 ];
 
-test.describe('Web v30: /notes Authorization', () => {
+test.describe('Web: /notes Authorization', () => {
   test('SC-001: redirects to /login when no auth token', async ({ page }) => {
     await page.route('**/api/notes', (route) =>
       route.fulfill({
