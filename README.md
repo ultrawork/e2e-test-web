@@ -43,17 +43,12 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api APP_PORT=3000 \
 - SC-005: валидация заголовка Authorization в исходящих запросах
 - SC-006: обработка 401 → очистка токена + redirect `/login`
 
-**Запуск:**
+**Команды проверки:**
 ```bash
+npm ci
+npm run build
+npm run lint
+npx tsc --noEmit
 NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api APP_PORT=3000 \
   npx playwright test e2e/web-notes-auth-v28.spec.ts
 ```
-
-**Переменные окружения:**
-| Переменная | Значение по умолчанию | Описание |
-|---|---|---|
-| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:4000/api` | Base URL backend API |
-| `APP_PORT` | `3000` | Порт Next.js приложения |
-| `BASE_URL` | `http://localhost:3000` | Base URL для Playwright |
-
-**Ключ токена:** `token` в `localStorage`
