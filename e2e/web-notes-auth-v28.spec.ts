@@ -24,6 +24,7 @@ test.describe('Web v28: /notes Authorization', () => {
 
     await page.goto('/notes');
     await expect(page).toHaveURL(/\/login/);
+    await page.screenshot({ path: 'screenshots/SC-001-redirect-no-token.png' });
   });
 
   test('SC-002: GET /api/notes with Bearer token renders notes list', async ({ page }) => {
@@ -45,6 +46,7 @@ test.describe('Web v28: /notes Authorization', () => {
 
     await expect(page.getByText('Note A v28')).toBeVisible();
     await expect(page.getByText('Note B v28')).toBeVisible();
+    await page.screenshot({ path: 'screenshots/SC-002-notes-list.png' });
   });
 
   test('SC-003: POST /api/notes stateful mock with Authorization Bearer', async ({ page }) => {
@@ -78,6 +80,7 @@ test.describe('Web v28: /notes Authorization', () => {
     await page.getByPlaceholder('Enter a note').fill('New v28 note');
     await page.getByRole('button', { name: 'Add' }).click();
     await expect(page.getByText('New v28 note')).toBeVisible();
+    await page.screenshot({ path: 'screenshots/SC-003-post-note.png' });
   });
 
   test('SC-004: DELETE note with Authorization Bearer', async ({ page }) => {
@@ -110,6 +113,7 @@ test.describe('Web v28: /notes Authorization', () => {
     await expect(page.getByText('Delete me v28')).toBeVisible();
     await page.getByRole('button', { name: 'Delete note: Delete me v28' }).click();
     await expect(page.getByText('Delete me v28')).not.toBeVisible();
+    await page.screenshot({ path: 'screenshots/SC-004-delete-note.png' });
   });
 
   test('SC-005: outgoing requests include Authorization: Bearer token', async ({ page }) => {
@@ -137,6 +141,7 @@ test.describe('Web v28: /notes Authorization', () => {
 
     expect(capturedAuth.length).toBeGreaterThan(0);
     expect(capturedAuth[0]).toBe(`Bearer ${TOKEN}`);
+    await page.screenshot({ path: 'screenshots/SC-005-auth-header.png' });
   });
 
   test('SC-006: 401 response clears token and redirects to /login', async ({ page }) => {
@@ -156,5 +161,6 @@ test.describe('Web v28: /notes Authorization', () => {
 
     const stored = await page.evaluate(() => localStorage.getItem('token'));
     expect(stored).toBeNull();
+    await page.screenshot({ path: 'screenshots/SC-006-401-redirect.png' });
   });
 });
