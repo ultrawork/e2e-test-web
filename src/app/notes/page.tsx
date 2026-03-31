@@ -57,7 +57,7 @@ export default function NotesPage(): React.ReactElement {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify({ title, content: '' }),
+      body: JSON.stringify({ title, content: title }),
     });
     if (res.status === 401) {
       localStorage.removeItem('token');
