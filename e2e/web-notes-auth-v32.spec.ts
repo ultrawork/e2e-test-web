@@ -12,7 +12,7 @@ const SEED_NOTES: Note[] = [
   { id: 2, title: 'Note B v32' },
 ];
 
-test.describe('Web: /notes Authorization', () => {
+test.describe('Web: /notes Authorization v32', () => {
   test('SC-001: redirects to /login when no auth token', async ({ page }) => {
     await page.route('**/api/notes', (route) =>
       route.fulfill({
@@ -24,7 +24,7 @@ test.describe('Web: /notes Authorization', () => {
 
     await page.goto('/notes');
     await expect(page).toHaveURL(/\/login/);
-    await page.screenshot({ path: 'screenshots/SC-001-redirect-no-token.png' });
+    await page.screenshot({ path: 'screenshots/v32-SC-001-redirect-no-token.png' });
   });
 
   test('SC-002: GET /api/notes with Bearer token renders notes list', async ({ page }) => {
@@ -46,7 +46,7 @@ test.describe('Web: /notes Authorization', () => {
 
     await expect(page.getByText('Note A v32')).toBeVisible();
     await expect(page.getByText('Note B v32')).toBeVisible();
-    await page.screenshot({ path: 'screenshots/SC-002-notes-list.png' });
+    await page.screenshot({ path: 'screenshots/v32-SC-002-notes-list.png' });
   });
 
   test('SC-003: POST /api/notes stateful mock with Authorization Bearer', async ({ page }) => {
@@ -80,7 +80,7 @@ test.describe('Web: /notes Authorization', () => {
     await page.getByPlaceholder('Enter a note').fill('New v32 note');
     await page.getByRole('button', { name: 'Add' }).click();
     await expect(page.getByText('New v32 note')).toBeVisible();
-    await page.screenshot({ path: 'screenshots/SC-003-post-note.png' });
+    await page.screenshot({ path: 'screenshots/v32-SC-003-post-note.png' });
   });
 
   test('SC-004: DELETE note with Authorization Bearer', async ({ page }) => {
@@ -113,7 +113,7 @@ test.describe('Web: /notes Authorization', () => {
     await expect(page.getByText('Delete me v32')).toBeVisible();
     await page.getByRole('button', { name: 'Delete note: Delete me v32' }).click();
     await expect(page.getByText('Delete me v32')).not.toBeVisible();
-    await page.screenshot({ path: 'screenshots/SC-004-delete-note.png' });
+    await page.screenshot({ path: 'screenshots/v32-SC-004-delete-note.png' });
   });
 
   test('SC-005: outgoing requests include Authorization: Bearer token', async ({ page }) => {
@@ -141,7 +141,7 @@ test.describe('Web: /notes Authorization', () => {
 
     expect(capturedAuth.length).toBeGreaterThan(0);
     expect(capturedAuth[0]).toBe(`Bearer ${TOKEN}`);
-    await page.screenshot({ path: 'screenshots/SC-005-auth-header.png' });
+    await page.screenshot({ path: 'screenshots/v32-SC-005-auth-header.png' });
   });
 
   test('SC-006: 401 response clears token and redirects to /login', async ({ page }) => {
@@ -161,6 +161,6 @@ test.describe('Web: /notes Authorization', () => {
 
     const stored = await page.evaluate(() => localStorage.getItem('token'));
     expect(stored).toBeNull();
-    await page.screenshot({ path: 'screenshots/SC-006-401-redirect.png' });
+    await page.screenshot({ path: 'screenshots/v32-SC-006-401-redirect.png' });
   });
 });
