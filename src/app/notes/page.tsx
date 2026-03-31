@@ -24,18 +24,24 @@ export default function NotesPage(): React.ReactElement {
     }
     setAuthenticated(true);
 
-    fetchNotes().then((result) => {
-      if (result.ok) {
-        setNotes(result.data);
-      } else if (result.error.status === 401) {
-        localStorage.removeItem('token');
-        router.push('/login');
-        return;
-      } else {
-        setError(result.error.message);
-      }
-      setLoading(false);
-    });
+    fetchNotes()
+      .then((result) => {
+        if (result.ok) {
+          setNotes(result.data);
+        } else if (result.error.status === 401) {
+          localStorage.removeItem('token');
+          router.push('/login');
+          return;
+        } else {
+          setError(result.error.message);
+        }
+      })
+      .catch(() => {
+        setError('Network error');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [router]);
 
   const filteredNotes = notes.filter((n) =>
@@ -46,27 +52,35 @@ export default function NotesPage(): React.ReactElement {
     const title = input.trim();
     if (!title) return;
 
-    const result = await createNote(title);
-    if (result.ok) {
-      setNotes((prev) => [...prev, result.data]);
-      setInput('');
-    } else if (result.error.status === 401) {
-      localStorage.removeItem('token');
-      router.push('/login');
-    } else {
-      setError(result.error.message);
+    try {
+      const result = await createNote(title);
+      if (result.ok) {
+        setNotes((prev) => [...prev, result.data]);
+        setInput('');
+      } else if (result.error.status === 401) {
+        localStorage.removeItem('token');
+        router.push('/login');
+      } else {
+        setError(result.error.message);
+      }
+    } catch {
+      setError('Network error');
     }
   }
 
   async function handleDeleteNote(id: number): Promise<void> {
-    const result = await deleteNote(id);
-    if (result.ok) {
-      setNotes((prev) => prev.filter((n) => n.id !== id));
-    } else if (result.error.status === 401) {
-      localStorage.removeItem('token');
-      router.push('/login');
-    } else {
-      setError(result.error.message);
+    try {
+      const result = await deleteNote(id);
+      if (result.ok) {
+        setNotes((prev) => prev.filter((n) => n.id !== id));
+      } else if (result.error.status === 401) {
+        localStorage.removeItem('token');
+        router.push('/login');
+      } else {
+        setError(result.error.message);
+      }
+    } catch {
+      setError('Network error');
     }
   }
 
