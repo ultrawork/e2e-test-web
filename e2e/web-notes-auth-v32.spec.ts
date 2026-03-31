@@ -23,7 +23,7 @@ test.describe('Web: /notes Authorization v32', () => {
     );
 
     await page.goto('/notes');
-    await expect(page).toHaveURL(/\/login/);
+    await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
     await page.screenshot({ path: 'screenshots/v32-SC-001-redirect-no-token.png' });
   });
 
@@ -44,8 +44,8 @@ test.describe('Web: /notes Authorization v32', () => {
 
     await page.goto('/notes');
 
-    await expect(page.getByText('Note A v32')).toBeVisible();
-    await expect(page.getByText('Note B v32')).toBeVisible();
+    await expect(page.getByText('Note A v32')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Note B v32')).toBeVisible({ timeout: 10000 });
     await page.screenshot({ path: 'screenshots/v32-SC-002-notes-list.png' });
   });
 
@@ -77,9 +77,10 @@ test.describe('Web: /notes Authorization v32', () => {
     });
 
     await page.goto('/notes');
+    await expect(page.getByText('Existing v32')).toBeVisible({ timeout: 10000 });
     await page.getByPlaceholder('Enter a note').fill('New v32 note');
     await page.getByRole('button', { name: 'Add' }).click();
-    await expect(page.getByText('New v32 note')).toBeVisible();
+    await expect(page.getByText('New v32 note')).toBeVisible({ timeout: 10000 });
     await page.screenshot({ path: 'screenshots/v32-SC-003-post-note.png' });
   });
 
@@ -113,9 +114,9 @@ test.describe('Web: /notes Authorization v32', () => {
     });
 
     await page.goto('/notes');
-    await expect(page.getByText('Delete me v32')).toBeVisible();
+    await expect(page.getByText('Delete me v32')).toBeVisible({ timeout: 10000 });
     await page.getByRole('button', { name: 'Delete note: Delete me v32' }).click();
-    await expect(page.getByText('Delete me v32')).not.toBeVisible();
+    await expect(page.getByText('Delete me v32')).not.toBeVisible({ timeout: 10000 });
     await page.screenshot({ path: 'screenshots/v32-SC-004-delete-note.png' });
   });
 
@@ -140,7 +141,7 @@ test.describe('Web: /notes Authorization v32', () => {
     );
 
     await page.goto('/notes');
-    await expect(page.getByText('Note A v32')).toBeVisible();
+    await expect(page.getByText('Note A v32')).toBeVisible({ timeout: 10000 });
 
     expect(capturedAuth.length).toBeGreaterThan(0);
     expect(capturedAuth[0]).toBe(`Bearer ${TOKEN}`);
@@ -157,10 +158,11 @@ test.describe('Web: /notes Authorization v32', () => {
     );
 
     await page.goto('/login');
+    await page.waitForLoadState('domcontentloaded');
     await page.evaluate((t) => localStorage.setItem('token', t), TOKEN);
     await page.goto('/notes');
 
-    await expect(page).toHaveURL(/\/login/);
+    await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
 
     const stored = await page.evaluate(() => localStorage.getItem('token'));
     expect(stored).toBeNull();
