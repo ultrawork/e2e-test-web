@@ -23,7 +23,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  const body = (await req.json()) as { title?: string };
+  let body: { title?: string };
+  try {
+    body = (await req.json()) as { title?: string };
+  } catch {
+    return NextResponse.json({ message: 'Invalid JSON' }, { status: 400 });
+  }
   if (!body.title || typeof body.title !== 'string') {
     return NextResponse.json({ message: 'title is required' }, { status: 400 });
   }

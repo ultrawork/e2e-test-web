@@ -33,32 +33,49 @@ async function handleResponse<T>(res: Response): Promise<Result<T>> {
   return { ok: false, error: { message, status: res.status } as ApiError };
 }
 
+function networkError(err: unknown): Result<never> {
+  const message = err instanceof Error ? err.message : 'Network error';
+  return { ok: false, error: { message, status: 0 } };
+}
+
 /** Fetch all notes. */
 export async function fetchNotes(): Promise<Result<Note[]>> {
-  const res = await fetch(`${API_BASE}/notes`, {
-    headers: { ...authHeaders() },
-  });
-  return handleResponse<Note[]>(res);
+  try {
+    const res = await fetch(`${API_BASE}/notes`, {
+      headers: { ...authHeaders() },
+    });
+    return handleResponse<Note[]>(res);
+  } catch (err) {
+    return networkError(err);
+  }
 }
 
 /** Create a new note. */
 export async function createNote(title: string): Promise<Result<Note>> {
-  const res = await fetch(`${API_BASE}/notes`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...authHeaders(),
-    },
-    body: JSON.stringify({ title }),
-  });
-  return handleResponse<Note>(res);
+  try {
+    const res = await fetch(`${API_BASE}/notes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+      },
+      body: JSON.stringify({ title }),
+    });
+    return handleResponse<Note>(res);
+  } catch (err) {
+    return networkError(err);
+  }
 }
 
 /** Delete a note by id. */
 export async function deleteNote(id: number): Promise<Result<void>> {
-  const res = await fetch(`${API_BASE}/notes/${id}`, {
-    method: 'DELETE',
-    headers: { ...authHeaders() },
-  });
-  return handleResponse<void>(res);
+  try {
+    const res = await fetch(`${API_BASE}/notes/${id}`, {
+      method: 'DELETE',
+      headers: { ...authHeaders() },
+    });
+    return handleResponse<void>(res);
+  } catch (err) {
+    return networkError(err);
+  }
 }

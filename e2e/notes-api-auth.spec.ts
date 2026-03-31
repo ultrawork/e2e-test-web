@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'e2e-test-secret-key-ultrawork';
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required for e2e tests');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 function signToken(sub: string): string {
   return jwt.sign({ sub, email: `${sub}@e2e.test` }, JWT_SECRET, { expiresIn: '1h' });
