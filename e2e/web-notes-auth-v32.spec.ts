@@ -102,7 +102,10 @@ test.describe('Web: /notes Authorization v32', () => {
 
     await page.route('**/api/notes/*', (route) => {
       if (route.request().method() === 'DELETE') {
-        notes.splice(0, 1);
+        const url = route.request().url();
+        const id = Number(url.split('/').pop());
+        const idx = notes.findIndex((n) => n.id === id);
+        if (idx !== -1) notes.splice(idx, 1);
         route.fulfill({ status: 204, body: '' });
       } else {
         route.continue();
