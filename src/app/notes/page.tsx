@@ -57,6 +57,7 @@ export default function NotesPage(): React.ReactElement {
       if (result.ok) {
         setNotes((prev) => [...prev, result.data]);
         setInput('');
+        setError(null);
       } else if (result.error.status === 401) {
         localStorage.removeItem('token');
         router.push('/login');
@@ -73,6 +74,7 @@ export default function NotesPage(): React.ReactElement {
       const result = await deleteNote(id);
       if (result.ok) {
         setNotes((prev) => prev.filter((n) => n.id !== id));
+        setError(null);
       } else if (result.error.status === 401) {
         localStorage.removeItem('token');
         router.push('/login');

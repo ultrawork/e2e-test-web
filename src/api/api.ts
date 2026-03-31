@@ -16,7 +16,7 @@ function authHeaders(): Record<string, string> {
 async function handleResponse<T>(res: Response): Promise<Result<T>> {
   if (res.ok) {
     if (res.status === 204) {
-      return { ok: true, data: undefined as T };
+      return { ok: true } as Result<T>;
     }
     const data = (await res.json()) as T;
     return { ok: true, data };

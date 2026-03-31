@@ -151,8 +151,8 @@ test.describe('Notes API Integration', () => {
 
     await page.goto('/notes');
 
-    // Wait for notes request to complete
-    await page.waitForTimeout(3000);
+    // Wait for the notes API request to complete
+    await page.waitForResponse((res) => res.url().includes('/api/notes'));
 
     expect(capturedAuth.length).toBeGreaterThan(0);
     expect(capturedAuth[0]).toBe(`Bearer ${TOKEN}`);
