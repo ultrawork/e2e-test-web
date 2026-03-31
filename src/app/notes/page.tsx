@@ -4,13 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import NotesCounter from '@/components/NotesCounter';
 import SearchBar from '@/components/SearchBar';
-
-interface Note {
-  id: number;
-  title: string;
-}
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
+import type { Note } from '@/api/types';
+import { fetchNotes, createNote, deleteNote } from '@/api/api';
 
 export default function NotesPage(): React.ReactElement {
   const router = useRouter();
@@ -18,6 +13,8 @@ export default function NotesPage(): React.ReactElement {
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -27,19 +24,23 @@ export default function NotesPage(): React.ReactElement {
     }
     setAuthenticated(true);
 
-    fetch(`${API_BASE}/notes`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (res.status === 401) {
+    fetchNotes()
+      .then((result) => {
+        if (result.ok) {
+          setNotes(result.data);
+        } else if (result.error.status === 401) {
           localStorage.removeItem('token');
           router.push('/login');
-          return null;
+          return;
+        } else {
+          setError(result.error.message);
         }
-        return res.json();
       })
-      .then((data) => {
-        if (data) setNotes(data);
+      .catch(() => {
+        setError('Network error');
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, [router]);
 
@@ -47,42 +48,42 @@ export default function NotesPage(): React.ReactElement {
     n.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  async function addNote(): Promise<void> {
+  async function handleAddNote(): Promise<void> {
     const title = input.trim();
     if (!title) return;
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_BASE}/notes`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ title }),
-    });
-    if (res.status === 401) {
-      localStorage.removeItem('token');
-      router.push('/login');
-      return;
+
+    try {
+      const result = await createNote(title);
+      if (result.ok) {
+        setNotes((prev) => [...prev, result.data]);
+        setInput('');
+        setError(null);
+      } else if (result.error.status === 401) {
+        localStorage.removeItem('token');
+        router.push('/login');
+      } else {
+        setError(result.error.message);
+      }
+    } catch {
+      setError('Network error');
     }
-    const created = await res.json();
-    setNotes((prev) => [...prev, created]);
-    setInput('');
   }
 
-  async function deleteNote(id: number): Promise<void> {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_BASE}/notes/${id}`, {
-      method: 'DELETE',
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    });
-    if (res.status === 401) {
-      localStorage.removeItem('token');
-      router.push('/login');
-      return;
+  async function handleDeleteNote(id: number): Promise<void> {
+    try {
+      const result = await deleteNote(id);
+      if (result.ok) {
+        setNotes((prev) => prev.filter((n) => n.id !== id));
+        setError(null);
+      } else if (result.error.status === 401) {
+        localStorage.removeItem('token');
+        router.push('/login');
+      } else {
+        setError(result.error.message);
+      }
+    } catch {
+      setError('Network error');
     }
-    setNotes((prev) => prev.filter((n) => n.id !== id));
   }
 
   if (!authenticated) {
@@ -93,56 +94,72 @@ export default function NotesPage(): React.ReactElement {
     <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
       <h1>Notes</h1>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          addNote();
-        }}
-        style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}
-      >
-        <label htmlFor="new-note" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
-          New note
-        </label>
-        <input
-          id="new-note"
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Enter a note"
-          style={{ flex: 1, padding: '0.5rem' }}
-        />
-        <button type="submit" style={{ padding: '0.5rem 1rem' }}>
-          Add
-        </button>
-      </form>
+      {error && (
+        <div role="alert" style={{ color: 'red', marginBottom: '1rem' }}>
+          {error}
+        </div>
+      )}
 
-      <SearchBar value={searchQuery} onChange={setSearchQuery} />
-
-      <NotesCounter totalCount={notes.length} filteredCount={searchQuery ? filteredNotes.length : undefined} />
-
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {filteredNotes.map((note) => (
-          <li
-            key={note.id}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '0.5rem 0',
-              borderBottom: '1px solid #eee',
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAddNote();
             }}
+            style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}
           >
-            <span>{note.title}</span>
-            <button
-              onClick={() => deleteNote(note.id)}
-              aria-label={`Delete note: ${note.title}`}
-              style={{ padding: '0.25rem 0.5rem' }}
-            >
-              Delete
+            <label htmlFor="new-note" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+              New note
+            </label>
+            <input
+              id="new-note"
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Enter a note"
+              style={{ flex: 1, padding: '0.5rem' }}
+            />
+            <button type="submit" style={{ padding: '0.5rem 1rem' }}>
+              Add
             </button>
-          </li>
-        ))}
-      </ul>
+          </form>
+
+          <SearchBar value={searchQuery} onChange={setSearchQuery} />
+
+          <NotesCounter totalCount={notes.length} filteredCount={searchQuery ? filteredNotes.length : undefined} />
+
+          {notes.length === 0 ? (
+            <p>No notes yet</p>
+          ) : (
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+              {filteredNotes.map((note) => (
+                <li
+                  key={note.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '0.5rem 0',
+                    borderBottom: '1px solid #eee',
+                  }}
+                >
+                  <span>{note.title}</span>
+                  <button
+                    onClick={() => handleDeleteNote(note.id)}
+                    aria-label={`Delete note: ${note.title}`}
+                    style={{ padding: '0.25rem 0.5rem' }}
+                  >
+                    Delete
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
     </main>
   );
 }
