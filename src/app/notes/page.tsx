@@ -57,13 +57,14 @@ export default function NotesPage(): React.ReactElement {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify({ title }),
+      body: JSON.stringify({ title, content: title }),
     });
     if (res.status === 401) {
       localStorage.removeItem('token');
       router.push('/login');
       return;
     }
+    if (!res.ok) return;
     const created = await res.json();
     setNotes((prev) => [...prev, created]);
     setInput('');
