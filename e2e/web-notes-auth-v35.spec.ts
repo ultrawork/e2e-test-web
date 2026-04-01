@@ -1,115 +1,110 @@
 import { test, expect } from '@playwright/test';
+import * as crypto from 'crypto';
 
-const TOKEN = 'test-token-v35';
+const JWT_SECRET = process.env.JWT_SECRET || 'e2e-test-secret-key-ultrawork';
 
-interface Note {
-  id: number;
-  title: string;
+function signJWT(payload: Record<string, unknown>): string {
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const b64url = (s: string) => Buffer.from(s).toString('base64url');
+  const h = b64url(JSON.stringify(header));
+  const p = b64url(JSON.stringify(payload));
+  const sig = crypto
+    .createHmac('sha256', JWT_SECRET)
+    .update(`${h}.${p}`)
+    .digest('base64url');
+  return `${h}.${p}.${sig}`;
 }
 
-const SEED_NOTES: Note[] = [
-  { id: 1, title: 'Note A v35' },
-  { id: 2, title: 'Note B v35' },
-];
+const TOKEN = signJWT({
+  sub: 'test-user-v35',
+  iat: Math.floor(Date.now() / 1000),
+  exp: Math.floor(Date.now() / 1000) + 3600,
+});
 
-test.describe('Web: /notes Authorization', () => {
+const API_BASE = process.env.API_URL || process.env.BASE_URL || 'http://localhost:4000';
+
+function authHeaders(): Record<string, string> {
+  return {
+    Authorization: `Bearer ${TOKEN}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+test.describe('Web: /notes Authorization v35', () => {
   test('SC-001: redirects to /login when no auth token', async ({ page }) => {
-    await page.route('**/api/notes', (route) =>
-      route.fulfill({
-        status: 401,
-        contentType: 'application/json',
-        body: JSON.stringify({ message: 'Unauthorized' }),
-      }),
-    );
-
     await page.goto('/notes');
     await expect(page).toHaveURL(/\/login/);
     await page.screenshot({ path: 'screenshots/SC-001-redirect-no-token.png' });
   });
 
-  test('SC-002: GET /api/notes with Bearer token renders notes list', async ({ page }) => {
-    await page.addInitScript((t) => localStorage.setItem('token', t), TOKEN);
-
-    await page.route('**/api/notes', (route) => {
-      if (route.request().method() === 'GET') {
-        route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify(SEED_NOTES),
-        });
-      } else {
-        route.continue();
-      }
+  test('SC-002: GET /api/notes with Bearer token renders notes list', async ({
+    page,
+    request,
+  }) => {
+    const r1 = await request.post(`${API_BASE}/api/notes`, {
+      headers: authHeaders(),
+      data: { title: 'Note A v35' },
     });
+    expect(r1.ok()).toBeTruthy();
+    const note1 = await r1.json();
 
+    const r2 = await request.post(`${API_BASE}/api/notes`, {
+      headers: authHeaders(),
+      data: { title: 'Note B v35' },
+    });
+    expect(r2.ok()).toBeTruthy();
+    const note2 = await r2.json();
+
+    await page.addInitScript((t) => localStorage.setItem('token', t), TOKEN);
     await page.goto('/notes');
 
     await expect(page.getByText('Note A v35')).toBeVisible();
     await expect(page.getByText('Note B v35')).toBeVisible();
     await page.screenshot({ path: 'screenshots/SC-002-notes-list.png' });
+
+    // Cleanup
+    await request.delete(`${API_BASE}/api/notes/${note1.id}`, {
+      headers: authHeaders(),
+    });
+    await request.delete(`${API_BASE}/api/notes/${note2.id}`, {
+      headers: authHeaders(),
+    });
   });
 
-  test('SC-003: POST /api/notes stateful mock with Authorization Bearer', async ({ page }) => {
+  test('SC-003: POST /api/notes creates note via UI form', async ({ page, request }) => {
     await page.addInitScript((t) => localStorage.setItem('token', t), TOKEN);
-
-    const notes: Note[] = [{ id: 1, title: 'Existing v35' }];
-
-    await page.route('**/api/notes', (route) => {
-      const req = route.request();
-      if (req.method() === 'GET') {
-        route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify(notes),
-        });
-      } else if (req.method() === 'POST') {
-        const body = req.postDataJSON() as { title: string };
-        const created: Note = { id: Date.now(), title: body.title };
-        notes.push(created);
-        route.fulfill({
-          status: 201,
-          contentType: 'application/json',
-          body: JSON.stringify(created),
-        });
-      } else {
-        route.continue();
-      }
-    });
-
     await page.goto('/notes');
+
     await page.getByPlaceholder('Enter a note').fill('New v35 note');
     await page.getByRole('button', { name: 'Add' }).click();
     await expect(page.getByText('New v35 note')).toBeVisible();
     await page.screenshot({ path: 'screenshots/SC-003-post-note.png' });
+
+    // Cleanup: find and delete the created note
+    const listRes = await request.get(`${API_BASE}/api/notes`, {
+      headers: authHeaders(),
+    });
+    const notes = await listRes.json();
+    for (const n of notes) {
+      if (n.title === 'New v35 note') {
+        await request.delete(`${API_BASE}/api/notes/${n.id}`, {
+          headers: authHeaders(),
+        });
+      }
+    }
   });
 
-  test('SC-004: DELETE note with Authorization Bearer', async ({ page }) => {
+  test('SC-004: DELETE note via UI button', async ({ page, request }) => {
+    // Seed a note to delete
+    const r = await request.post(`${API_BASE}/api/notes`, {
+      headers: authHeaders(),
+      data: { title: 'Delete me v35' },
+    });
+    expect(r.ok()).toBeTruthy();
+
     await page.addInitScript((t) => localStorage.setItem('token', t), TOKEN);
-
-    const notes: Note[] = [{ id: 1, title: 'Delete me v35' }];
-
-    await page.route('**/api/notes', (route) => {
-      if (route.request().method() === 'GET') {
-        route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify(notes),
-        });
-      } else {
-        route.continue();
-      }
-    });
-
-    await page.route('**/api/notes/*', (route) => {
-      if (route.request().method() === 'DELETE') {
-        notes.splice(0, 1);
-        route.fulfill({ status: 204, body: '' });
-      } else {
-        route.continue();
-      }
-    });
-
     await page.goto('/notes');
+
     await expect(page.getByText('Delete me v35')).toBeVisible();
     await page.getByRole('button', { name: 'Delete note: Delete me v35' }).click();
     await expect(page.getByText('Delete me v35')).not.toBeVisible();
@@ -128,16 +123,8 @@ test.describe('Web: /notes Authorization', () => {
       }
     });
 
-    await page.route('**/api/notes', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(SEED_NOTES),
-      }),
-    );
-
     await page.goto('/notes');
-    await expect(page.getByText('Note A v35')).toBeVisible();
+    await page.waitForTimeout(2000);
 
     expect(capturedAuth.length).toBeGreaterThan(0);
     expect(capturedAuth[0]).toBe(`Bearer ${TOKEN}`);
@@ -145,16 +132,10 @@ test.describe('Web: /notes Authorization', () => {
   });
 
   test('SC-006: 401 response clears token and redirects to /login', async ({ page }) => {
-    await page.route('**/api/notes', (route) =>
-      route.fulfill({
-        status: 401,
-        contentType: 'application/json',
-        body: JSON.stringify({ message: 'Unauthorized' }),
-      }),
-    );
+    const invalidToken = 'invalid-expired-token-v35';
 
     await page.goto('/login');
-    await page.evaluate((t) => localStorage.setItem('token', t), TOKEN);
+    await page.evaluate((t) => localStorage.setItem('token', t), invalidToken);
     await page.goto('/notes');
 
     await expect(page).toHaveURL(/\/login/);
