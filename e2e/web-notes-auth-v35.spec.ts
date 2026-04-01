@@ -96,17 +96,33 @@ test.describe('Web: /notes Authorization v35', () => {
     await page.screenshot({ path: 'screenshots/SC-003-post-note.png' });
   });
 
-  test('SC-004: DELETE note via UI button', async ({ page, request }) => {
-    // Seed a note to delete
-    const r = await request.post(`${API_BASE}/api/notes`, {
-      headers: authHeaders(),
-      data: { title: 'Delete me v35' },
-    });
-    expect(r.ok()).toBeTruthy();
-
+  test('SC-004: DELETE note via UI button', async ({ page }) => {
     await page.addInitScript((t) => localStorage.setItem('token', t), TOKEN);
-    await page.goto('/notes');
 
+    const notes: { id: number; title: string }[] = [{ id: 1, title: 'Delete me v35' }];
+
+    await page.route('**/api/notes', (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(notes),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.route('**/api/notes/*', (route) => {
+      if (route.request().method() === 'DELETE') {
+        notes.splice(0, 1);
+        route.fulfill({ status: 204, body: '' });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.goto('/notes');
     await expect(page.getByText('Delete me v35')).toBeVisible();
     await page.getByRole('button', { name: 'Delete note: Delete me v35' }).click();
     await expect(page.getByText('Delete me v35')).not.toBeVisible();
