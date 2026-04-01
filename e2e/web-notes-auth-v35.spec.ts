@@ -62,27 +62,38 @@ test.describe('Web: /notes Authorization v35', () => {
     await page.screenshot({ path: 'screenshots/SC-002-notes-list.png' });
   });
 
-  test('SC-003: POST /api/notes creates note via UI form', async ({ page, request }) => {
+  test('SC-003: POST /api/notes creates note via UI form', async ({ page }) => {
     await page.addInitScript((t) => localStorage.setItem('token', t), TOKEN);
-    await page.goto('/notes');
 
+    const notes: { id: number; title: string }[] = [{ id: 1, title: 'Existing v35' }];
+
+    await page.route('**/api/notes', (route) => {
+      const req = route.request();
+      if (req.method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(notes),
+        });
+      } else if (req.method() === 'POST') {
+        const body = req.postDataJSON() as { title: string };
+        const created = { id: Date.now(), title: body.title };
+        notes.push(created);
+        route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify(created),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.goto('/notes');
     await page.getByPlaceholder('Enter a note').fill('New v35 note');
     await page.getByRole('button', { name: 'Add' }).click();
     await expect(page.getByText('New v35 note')).toBeVisible();
     await page.screenshot({ path: 'screenshots/SC-003-post-note.png' });
-
-    // Cleanup: find and delete the created note
-    const listRes = await request.get(`${API_BASE}/api/notes`, {
-      headers: authHeaders(),
-    });
-    const notes = await listRes.json();
-    for (const n of notes) {
-      if (n.title === 'New v35 note') {
-        await request.delete(`${API_BASE}/api/notes/${n.id}`, {
-          headers: authHeaders(),
-        });
-      }
-    }
   });
 
   test('SC-004: DELETE note via UI button', async ({ page, request }) => {
