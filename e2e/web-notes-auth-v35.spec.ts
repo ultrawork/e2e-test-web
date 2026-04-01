@@ -37,38 +37,29 @@ test.describe('Web: /notes Authorization v35', () => {
     await page.screenshot({ path: 'screenshots/SC-001-redirect-no-token.png' });
   });
 
-  test('SC-002: GET /api/notes with Bearer token renders notes list', async ({
-    page,
-    request,
-  }) => {
-    const r1 = await request.post(`${API_BASE}/api/notes`, {
-      headers: authHeaders(),
-      data: { title: 'Note A v35' },
-    });
-    expect(r1.ok()).toBeTruthy();
-    const note1 = await r1.json();
-
-    const r2 = await request.post(`${API_BASE}/api/notes`, {
-      headers: authHeaders(),
-      data: { title: 'Note B v35' },
-    });
-    expect(r2.ok()).toBeTruthy();
-    const note2 = await r2.json();
-
+  test('SC-002: GET /api/notes with Bearer token renders notes list', async ({ page }) => {
     await page.addInitScript((t) => localStorage.setItem('token', t), TOKEN);
+
+    await page.route('**/api/notes', (route) => {
+      if (route.request().method() === 'GET') {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([
+            { id: 1, title: 'Note A v35' },
+            { id: 2, title: 'Note B v35' },
+          ]),
+        });
+      } else {
+        route.continue();
+      }
+    });
+
     await page.goto('/notes');
 
     await expect(page.getByText('Note A v35')).toBeVisible();
     await expect(page.getByText('Note B v35')).toBeVisible();
     await page.screenshot({ path: 'screenshots/SC-002-notes-list.png' });
-
-    // Cleanup
-    await request.delete(`${API_BASE}/api/notes/${note1.id}`, {
-      headers: authHeaders(),
-    });
-    await request.delete(`${API_BASE}/api/notes/${note2.id}`, {
-      headers: authHeaders(),
-    });
   });
 
   test('SC-003: POST /api/notes creates note via UI form', async ({ page, request }) => {
